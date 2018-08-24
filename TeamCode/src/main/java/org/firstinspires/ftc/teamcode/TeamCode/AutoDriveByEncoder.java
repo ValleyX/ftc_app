@@ -105,14 +105,23 @@ public class AutoDriveByEncoder extends LinearOpMode {
                           robot.rightDrive.getCurrentPosition());
         telemetry.update();
 
+        System.out.println("ValleyX: Waiting for Start");
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
 
+        System.out.println("ValleyX: Starting...");
+
         // Step through each leg of the path,
         // Note: Reverse movement is obtained by setting a negative distance (not speed)
-        encoderDrive(DRIVE_SPEED,  49,  49, 5.0);  // S1: Forward 47 Inches with 5 Sec timeout
-        encoderDrive(TURN_SPEED,   12, -12, 4.0);  // S2: Turn Right 12 Inches with 4 Sec timeout
-        encoderDrive(DRIVE_SPEED, -24, -24, 4.0);  // S3: Reverse 24 Inches with 4 Sec timeout
+        final double forward = 49;
+        final double turnRight = 12;
+        final double back = 12;
+        System.out.printf("ValleyX: Forward %f inches\n", forward);
+        encoderDrive(DRIVE_SPEED,  forward,  forward, 5.0);  // S1: Forward 47 Inches with 5 Sec timeout
+        System.out.printf("ValleyX: Turn Right %f inches\n", turnRight);
+        encoderDrive(TURN_SPEED,   turnRight, -turnRight, 4.0);  // S2: Turn Right 12 Inches with 4 Sec timeout
+        System.out.printf("ValleyX: back %f inches\n", back);
+        encoderDrive(DRIVE_SPEED, -back, -back, 4.0);  // S3: Reverse 24 Inches with 4 Sec timeout
         //encoderDrive(DRIVE_SPEED,  10,  10, 10.0);  // S1: Forward 47 Inches with 5 Sec timeout
         //encoderDrive(TURN_SPEED,   10, -10, 4.0);  // S2: Turn Right 12 Inches with 4 Sec timeout
         //encoderDrive(DRIVE_SPEED, -10, -10, 4.0);  // S3: Reverse 24 Inches with 4 Sec timeout
