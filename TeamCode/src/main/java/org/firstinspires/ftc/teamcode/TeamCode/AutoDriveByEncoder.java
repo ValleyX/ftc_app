@@ -29,10 +29,15 @@
 
 package org.firstinspires.ftc.teamcode.TeamCode;
 
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.ColorSensor;
+import android.graphics.Color;
 
 /**
  * This file illustrates the concept of driving a path based on encoder counts.
@@ -69,13 +74,21 @@ public class AutoDriveByEncoder extends LinearOpMode {
     HardwareTest            robot   = new HardwareTest();   // Use a Pushbot's hardware
     private ElapsedTime     runtime = new ElapsedTime();
 
-    static final double     COUNTS_PER_MOTOR_REV    = 28 ;    // eg: TETRIX Motor Encoder
+    static final double     COUNTS_PER_MOTOR_REV    = 28 ;    //  AndyMark Motor Encoder
     static final double     DRIVE_GEAR_REDUCTION    = 40.0;     // This is < 1.0 if geared UP
     static final double     WHEEL_DIAMETER_INCHES   = 3.9 ;     // For figuring circumference
     static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
                                                       (WHEEL_DIAMETER_INCHES * 3.1415);
     static final double     DRIVE_SPEED             = 0.6;
     static final double     TURN_SPEED              = 0.5;
+
+    DigitalChannel digitalTouch; // Hardware Device Object
+    ColorSensor color_sensor;
+    OpticalDistanceSensor ods;
+
+
+    float hsvValues[] = {0F, 0F, 0F};
+    final double SCALE_FACTOR = 255;
 
     @Override
     public void runOpMode() {
@@ -105,12 +118,54 @@ public class AutoDriveByEncoder extends LinearOpMode {
                           robot.rightDrive.getCurrentPosition());
         telemetry.update();
 
+
+        // get a reference to our digitalTouch object.
+        //digitalTouch = hardwareMap.get(DigitalChannel.class, "sensor_digital");
+        digitalTouch = hardwareMap.get(DigitalChannel.class, "touch");
+
+        // set the digital channel to input.
+        digitalTouch.setMode(DigitalChannel.Mode.INPUT);
+
+        color_sensor = hardwareMap.colorSensor.get("color");
+        ods = hardwareMap.opticalDistanceSensor.get("ods");
+        ods.enableLed(true);
+
         System.out.println("ValleyX: Waiting for Start");
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
 
         System.out.println("ValleyX: Starting...");
 
+/*
+sensor testing
+        while (opModeIsActive()) {
+
+            color_sensor.enableLed(true);
+            // send the info back to driver station using telemetry function.
+            // if the digital channel returns true it's HIGH and the button is unpressed.
+            if (digitalTouch.getState() == true) {
+                telemetry.addData("Digital Touch", "Is Not Pressed");
+            } else {
+                telemetry.addData("Digital Touch", "Is Pressed");
+
+            }
+            Color.RGBToHSV((int) (color_sensor.red() * SCALE_FACTOR),
+                    (int) (color_sensor.green() * SCALE_FACTOR),
+                    (int) (color_sensor.blue() * SCALE_FACTOR),
+                    hsvValues);
+            telemetry.addData("Color Red", color_sensor.red());
+            telemetry.addData("Color Green", color_sensor.green());
+            telemetry.addData("Color Blue", color_sensor.blue());
+            telemetry.addData("Color Alpha", color_sensor.alpha());
+            telemetry.addData("Color Argb", color_sensor.argb());
+            telemetry.addData("Hue", hsvValues[0]);
+            telemetry.addData("Saturation", hsvValues[1]);
+            telemetry.addData("Lightness", hsvValues[2]);
+
+            telemetry.addData("Light Detected", ods.getLightDetected());
+            telemetry.update();
+        }
+*/
         // Step through each leg of the path,
         // Note: Reverse movement is obtained by setting a negative distance (not speed)
         final double forward = 49;
