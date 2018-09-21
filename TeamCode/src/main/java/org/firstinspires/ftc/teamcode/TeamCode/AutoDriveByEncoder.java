@@ -118,9 +118,11 @@ public class AutoDriveByEncoder extends LinearOpMode {
                           robot.rightDrive.getCurrentPosition());
         telemetry.update();
 
+        robot.leftClaw.setPosition(0.0);            // S4: Stop and close the claw.
+        robot.rightClaw.setPosition(1.0);
+
 
         // get a reference to our digitalTouch object.
-        //digitalTouch = hardwareMap.get(DigitalChannel.class, "sensor_digital");
         digitalTouch = hardwareMap.get(DigitalChannel.class, "touch");
 
         // set the digital channel to input.
@@ -135,9 +137,10 @@ public class AutoDriveByEncoder extends LinearOpMode {
         waitForStart();
 
         System.out.println("ValleyX: Starting...");
+        SamanthaTest();
 
 /*
-sensor testing
+//sensor testing
         while (opModeIsActive()) {
 
             color_sensor.enableLed(true);
@@ -166,11 +169,12 @@ sensor testing
             telemetry.update();
         }
 */
+/*
         // Step through each leg of the path,
         // Note: Reverse movement is obtained by setting a negative distance (not speed)
-        final double forward = 49;
+        final double forward = 48;
         final double turnRight = 12;
-        final double back = 12;
+        final double back = 24;
         System.out.printf("ValleyX: Forward %f inches\n", forward);
         encoderDrive(DRIVE_SPEED,  forward,  forward, 5.0);  // S1: Forward 47 Inches with 5 Sec timeout
         System.out.printf("ValleyX: Turn Right %f inches\n", turnRight);
@@ -187,6 +191,7 @@ sensor testing
 
         telemetry.addData("Path", "Complete");
         telemetry.update();
+        */
     }
 
     /*
@@ -247,7 +252,52 @@ sensor testing
             robot.leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             robot.rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-              sleep(250);   // optional pause after each move
+              sleep(1);   // optional pause after each move
         }
     }
+
+    public void SamanthaTest()
+    {
+        int counter = 0;
+
+        while (counter < 4)
+        {
+
+
+            robot.leftDrive.setPower(Math.abs(DRIVE_SPEED));
+            robot.rightDrive.setPower(Math.abs(DRIVE_SPEED));
+
+            resetStartTime();
+            // drive until touch sensor button pressed or 5 seconds passes.
+
+            while (digitalTouch.getState() == true)
+            {
+                idle();
+            }
+
+            // turn the motors off.
+
+            robot.leftDrive.setPower(0);
+            robot.rightDrive.setPower(0);
+
+/*
+            while (digitalTouch.getState() == true) //true means not pressed
+            {
+                final double forward = 2;
+                encoderDrive(DRIVE_SPEED, forward, forward, 5.0);
+            }
+*/
+            counter = counter + 1;
+            final double back = 12;
+            final double turn = 8;
+            encoderDrive(DRIVE_SPEED, -back, -back, 5.0); //going backwards 12 inches
+            encoderDrive(TURN_SPEED, -turn, turn, 5.0); //trying to turn left 90 degrees
+
+        }
+    }
+
 }
+
+
+
+
