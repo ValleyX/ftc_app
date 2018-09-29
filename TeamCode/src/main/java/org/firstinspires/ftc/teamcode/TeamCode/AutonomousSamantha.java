@@ -1,78 +1,102 @@
 package org.firstinspires.ftc.teamcode.TeamCode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+@Autonomous(name="Pushbot: AutonomousSamantha", group="Pushbot")
 public class AutonomousSamantha extends LinearOpMode
 {
-    private DcMotor motorLeft;
-    private DcMotor motorRight;
+    HardwareTest robot = new HardwareTest();
+    private ElapsedTime     runtime = new ElapsedTime();
+
+   //private DcMotor motorLeft;
+    //private DcMotor motorRight;
     private DigitalChannel digitalTouch;
-    private ElapsedTime runtime;
+    //private ElapsedTime runtime;
     static final double COUNTS_PER_MOTOR_REV  = 28;
     static final double DRIVE_GEAR_REDUCTION = 40.0;
-    static final double WHEEL_DIAMETER_INCHES = 3.9;
+    static final double WHEEL_DIAMETER_INCHES = 4.0;
     static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * 3.1415);
-    static final double RobotDiameter = 10.8;
+    static final double RobotDiameter = 11.3;
     static final double CIRCUMFERENCE = RobotDiameter * 3.1415;
 
     public double degToInches (double degrees)
     {
-        return (((1/360)* degrees) * CIRCUMFERENCE);
+        return (((1.0/360.0)* degrees) * CIRCUMFERENCE);
     }
 
     @Override
     public void runOpMode() throws InterruptedException
     {
-        motorLeft = hardwareMap.dcMotor.get("lmotor");
-        motorRight = hardwareMap.dcMotor.get("rmotor");
+        robot.init (hardwareMap);
+
+        telemetry.addData("Status", "Resetting Encoders");    //
+        telemetry.update();
+
+        robot.leftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        robot.leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        robot.rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        //motorLeft = hardwareMap.dcMotor.get("lmotor");
+        //motorRight = hardwareMap.dcMotor.get("rmotor");
         digitalTouch = hardwareMap.get(DigitalChannel.class, "touch");
 
-        motorLeft.setDirection(DcMotor.Direction.REVERSE);
+        //motorLeft.setDirection(DcMotor.Direction.REVERSE);
         digitalTouch.setMode(DigitalChannel.Mode.INPUT);
+        System.out.printf("ValleyX: Turning in %f\n", degToInches(90));
 
         System.out.println("ValleyX: Waiting for Start");
         waitForStart();
 
         System.out.println("ValleyX: Starting .... ");
+        /*
+        encoderDrive(0.3, degToInches(360), -degToInches(360), 5); //move both wheels 12 in at 30% speed
+        encoderDrive(0.3, -degToInches(360), degToInches(360), 5); //move both wheels 12 in at 30% speed
 
-        motorLeft.setPower(0.6); //1.0 is full power, 0.0 is no power
-        motorRight.setPower(0.6);
-        idle(); //wait for motors to respond
 
-        /*int counter = 0;
-        while (counter < 5)
-        {
-            System.out.printf("Counter %d\n", counter);
-            counter = counter + 1;
-        }
+        encoderDrive(0.3, 12, 12, 5); //move both wheels 12 in at 30% speed
+        encoderDrive(0.3, -12, -12, 5); //move both wheels 12 in at 30% speed
+        encoderDrive(0.3, 12, 12, 5); //move both wheels 12 in at 30% speed
+        encoderDrive(0.3, -12, -12, 5); //move both wheels 12 in at 30% speed
+        encoderDrive(0.3, degToInches(90), -degToInches(90), 5); //move both wheels 12 in at 30% speed
+        encoderDrive(0.3, -degToInches(90), degToInches(90), 5); //move both wheels 12 in at 30% speed
 */
+
+
         while (true) //loop forever
         {
             if (digitalTouch.getState() == true) //true means not pressed
             {
                 telemetry.addData("Digital Touch", "Is Not Pressed");
-                motorLeft.setPower(0.6); //1.0 is full power, 0.0 is no power
-                motorRight.setPower(0.6);
+                robot.leftDrive.setPower(0.3); //1.0 is full power, 0.0 is no power
+                robot.rightDrive.setPower(0.3);
                 idle(); //wait for motors to respond
             }
             else
             {
+                System.out.println("ValleyX: Touch Pressed");
                 telemetry.addData("Digital Touch", "Is Pressed");
-                motorLeft.setPower(0.0); //1.0 is full power, 0.0 is no power
-                motorRight.setPower(0.0);
+                robot.leftDrive.setPower(0.0); //1.0 is full power, 0.0 is no power
+                robot.rightDrive.setPower(0.0);
 
+                System.out.println("ValleyX: Backing Up 12 Inches");
                 encoderDrive(0.7, -12, -12, 5); //move both wheels 12 in at 70% speed
+                System.out.println("ValleyX: Turning Left 90 Degrees");
+                System.out.printf("ValleyX: Turning in %f\n", degToInches(90));
                 encoderDrive(0.7, degToInches(90), -degToInches(90), 5); //move both wheels 12 in at 70% speed
-                motorLeft.setPower(0.6); //1.0 is full power, 0.0 is no power
-                motorRight.setPower(0.6);
+                robot.leftDrive.setPower(0.3); //1.0 is full power, 0.0 is no power
+                robot.rightDrive.setPower(0.3);
                 idle(); //wait for motors to respond
             }
         }
+
     }
     /*
      *  Method to perform a relative move, based on encoder counts.
@@ -89,24 +113,30 @@ public class AutonomousSamantha extends LinearOpMode
         int newLeftTarget;
         int newRightTarget;
 
+        robot.leftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        robot.leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        robot.rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         // Ensure that the opmode is still active
         if (opModeIsActive())
         {
 
             // Determine new target position, and pass to motor controller
-            newLeftTarget = motorLeft.getCurrentPosition() + (int)(leftInches * COUNTS_PER_INCH);
-            newRightTarget = motorRight.getCurrentPosition() + (int)(rightInches * COUNTS_PER_INCH);
-            motorLeft.setTargetPosition(newLeftTarget);
-            motorRight.setTargetPosition(newRightTarget);
+            newLeftTarget = robot.leftDrive.getCurrentPosition() + (int)(leftInches * COUNTS_PER_INCH);
+            newRightTarget = robot.rightDrive.getCurrentPosition() + (int)(rightInches * COUNTS_PER_INCH);
+            robot.leftDrive.setTargetPosition(newLeftTarget);
+            robot.rightDrive.setTargetPosition(newRightTarget);
 
             // Turn On RUN_TO_POSITION
-            motorLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            motorRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
             // reset the timeout time and start motion.
             runtime.reset();
-            motorLeft.setPower(Math.abs(speed));
-            motorRight.setPower(Math.abs(speed));
+            robot.leftDrive.setPower(Math.abs(speed));
+            robot.rightDrive.setPower(Math.abs(speed));
 
             // keep looping while we are still active, and there is time left, and both motors are running.
             // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
@@ -116,24 +146,24 @@ public class AutonomousSamantha extends LinearOpMode
             // onto the next step, use (isBusy() || isBusy()) in the loop test.
             while (opModeIsActive() &&
                     (runtime.seconds() < timeoutS) &&
-                    (motorLeft.isBusy() && motorRight.isBusy()))
+                    (robot.leftDrive.isBusy() && robot.rightDrive.isBusy()))
             {
 
                 // Display it for the driver.
                 telemetry.addData("Path1",  "Running to %7d :%7d", newLeftTarget,  newRightTarget);
                 telemetry.addData("Path2",  "Running at %7d :%7d",
-                        motorLeft.getCurrentPosition(),
-                       motorRight.getCurrentPosition());
+                        robot.leftDrive.getCurrentPosition(),
+                       robot.rightDrive.getCurrentPosition());
                 telemetry.update();
             }
 
             // Stop all motion;
-            motorLeft.setPower(0);
-            motorRight.setPower(0);
+            robot.leftDrive.setPower(0);
+            robot.rightDrive.setPower(0);
 
             // Turn off RUN_TO_POSITION
-            motorLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            motorRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            robot.leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            robot.rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
             sleep(1);   // optional pause after each move
         }
