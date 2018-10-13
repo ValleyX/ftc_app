@@ -1,5 +1,9 @@
 package org.firstinspires.ftc.teamcode.TeamCode;
 
+import com.disnodeteam.dogecv.CameraViewDisplay;
+import com.disnodeteam.dogecv.DogeCV;
+import com.disnodeteam.dogecv.detectors.roverrukus.GoldAlignDetector;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -7,7 +11,7 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 
-
+@Autonomous(name="Pushbot: AutonomousJon", group="Pushbot")
 public class AutonomousJon extends LinearOpMode
 {
     private DcMotor motorLeft;
@@ -20,23 +24,80 @@ public class AutonomousJon extends LinearOpMode
     static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * 3.1415);
 
+
+    private GoldAlignDetector detector;
+
     @Override
     public void runOpMode() throws InterruptedException
     {
-        motorLeft = hardwareMap.dcMotor.get("lmotor");
-        motorRight = hardwareMap.dcMotor.get("rmotor");
-        digitalTouch = hardwareMap.get(DigitalChannel.class, "touch");
+       // motorLeft = hardwareMap.dcMotor.get("lmotor");
+        //motorRight = hardwareMap.dcMotor.get("rmotor");
+        //digitalTouch = hardwareMap.get(DigitalChannel.class, "touch");
         //ElapsedTime runtime = new ElapsedTime();
+        GoldAlignDetector goldAlignDetector = new GoldAlignDetector();
 
-        motorLeft.setDirection(DcMotor.Direction.REVERSE);
-        digitalTouch.setMode(DigitalChannel.Mode.INPUT);
+        //motorLeft.setDirection(DcMotor.Direction.REVERSE);
+        //digitalTouch.setMode(DigitalChannel.Mode.INPUT);
 
         System.out.println("ValleyX: Waiting for Start");
         waitForStart();
 
         System.out.println("ValleyX: Starting .... ");
 
+        System.out.println("ValleyX: Looking for gold");
 
+
+        telemetry.addData("Status", "DogeCV 2018.0 - Gold Align Example");
+
+
+        detector = new GoldAlignDetector();
+
+        detector.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
+
+        detector.useDefaults();
+
+
+        // Optional Tuning
+
+        detector.alignSize = 100; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
+
+        detector.alignPosOffset = 0; // How far from center frame to offset this alignment zone.
+
+        detector.downscale = 0.4; // How much to downscale the input frames
+
+
+        detector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA; // Can also be PERFECT_AREA
+
+        //detector.perfectAreaScorer.perfectArea = 10000; // if using PERFECT_AREA scoring
+
+        detector.maxAreaScorer.weight = 0.005;
+        detector.ratioScorer.weight = 5;
+        detector.ratioScorer.perfectRatio = 1.0;
+        detector.enable();
+
+        while (opModeIsActive())
+        {
+            telemetry.addData("IsAligned", detector.getAligned()); // Is the bot aligned with the gold mineral
+            telemetry.addData("X Pos", detector.getXPosition()); // Gold X pos in the view 270 - 370 is aligned
+            telemetry.addData("IsFound", detector.isFound()); //is the gold in view
+            telemetry.update();
+        }
+
+        System.out.println("ValleyX: ending");
+        detector.disable();
+
+/*
+
+        while (goldAlignDetector.isFound() == false)
+        {
+            if (goldAlignDetector.getAligned() == true)
+            {
+                System.out.printf("ValleyX: Gold in View x position = %f\n", goldAlignDetector.getXPosition());
+            }
+        }
+        System.out.printf("ValleyX: Gold straight ahead\n");
+*/
+/*
         encoderDrive(0.7, 12,12,5); //move both wheels 12 inches at 70% speed
 
         //Start motors
@@ -59,6 +120,7 @@ public class AutonomousJon extends LinearOpMode
            System.out.printf("Counter %d\n", counter);
            counter = counter + 1;
         }
+        */
     }
 
     /*
