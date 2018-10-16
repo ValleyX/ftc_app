@@ -14,19 +14,17 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 
-@Autonomous(name="AutonomousImuTest", group="Exercises")
+@Autonomous(name="AutonomousImuEncoder", group="Exercises")
 //@Disabled
-public class AutonomousImuTest extends LinearOpMode
+public class AutonomousImuEncoder extends LinearOpMode
 {
     DcMotor                 leftMotor;
     DcMotor                 rightMotor;
@@ -35,6 +33,13 @@ public class AutonomousImuTest extends LinearOpMode
     Orientation             lastAngles = new Orientation();
     double globalAngle, power = .30, correction;
     boolean                 aButton, bButton, touched;
+
+    private ElapsedTime runtime;
+    static final double COUNTS_PER_MOTOR_REV  = 28;
+    static final double DRIVE_GEAR_REDUCTION = 40.0;
+    static final double WHEEL_DIAMETER_INCHES = 3.9;
+    static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
+            (WHEEL_DIAMETER_INCHES * 3.1415);
 
     // called when init button is  pressed.
     @Override
@@ -86,53 +91,19 @@ public class AutonomousImuTest extends LinearOpMode
         telemetry.addData("Mode", "running");
         telemetry.update();
 
-        sleep(1000);
+        System.out.println("ValleyX: Straight 12 inches");
+        encoderDriveStraight(power, 12, 5);
 
-        // drive until end of period.
-        int count = 0;
+              // turn 90 degrees right
+        System.out.println("ValleyX: Right");
+        rotate(-90, power);
 
-        while (opModeIsActive())
-        {
-            // Use gyro to drive in a straight line.
-            correction = checkDirection();
+        System.out.println("ValleyX: Straight 8 inches");
+        encoderDriveStraight(power, 8, 5);
 
-            telemetry.addData("1 imu heading", lastAngles.firstAngle);
-            telemetry.addData("2 global heading", globalAngle);
-            telemetry.addData("3 correction", correction);
-            telemetry.update();
-
-            leftMotor.setPower(-power + correction);
-            rightMotor.setPower(-power);
-
-            // We record the sensor values because we will test them in more than
-            // one place with time passing between those places. See the lesson on
-            // Timing Considerations to know why.
-
-            //aButton = gamepad1.a;
-            //bButton = gamepad1.b;
-            //touched = touch.getState();
-            sleep(2000);
-
-
-                // stop.
-            leftMotor.setPower(0);
-            rightMotor.setPower(0);
-
-            if ((++count % 2) == 1)
-            {
-                // turn 90 degrees right
-                rotate(-90, power);
-                System.out.println("ValleyX: Right");
-            } else {
-                // turn 90 degrees left.
-                rotate(90, power);
-                System.out.println("ValleyX: Left");
-            }
-        }
-
-        // turn the motors off.
-        rightMotor.setPower(0);
-        leftMotor.setPower(0);
+        // turn 90 degrees left.
+        System.out.println("ValleyX: Left");
+        rotate(90, power);
     }
 
     /**
@@ -246,5 +217,83 @@ public class AutonomousImuTest extends LinearOpMode
         // reset angle tracking on new heading.
         resetAngle();
     }
+
+    /*
+     *  Method to perfmorm a relative move, based on encoder counts.
+     *  Encoders are not reset as the move is based on the current position.
+     *  Move will stop if any of three conditions occur:
+     *  1) Move gets to the desired position
+     *  2) Move runs out of time
+     *  3) Driver stops the opmode running.
+     */
+    public void encoderDriveStraight(double speed,
+                             double Inches,
+                             double timeoutS) {
+       // int newLeftTarget;
+        int newRightTarget;
+
+        // Ensure that the opmode is still active
+        if (opModeIsActive()) {
+
+            // Determine new target position, and pass to motor controller
+            //newLeftTarget = leftMotor.getCurrentPosition() + (int)(leftInches * COUNTS_PER_INCH);
+            newRightTarget = rightMotor.getCurrentPosition() + (int)(Inches * COUNTS_PER_INCH);
+            //leftMotor.setTargetPosition(newLeftTarget);
+            rightMotor.setTargetPosition(newRightTarget);
+
+            // Turn On RUN_TO_POSITION
+            //leftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            // reset the timeout time and start motion.
+            runtime.reset();
+
+            // reset angle tracking on new heading.
+            resetAngle();
+
+            //leftMotor.setPower(Math.abs(speed));
+            if (Inches < 0) {
+                leftMotor.setPower(-speed);
+            }
+            else
+            {
+                leftMotor.setPower(speed);
+            }
+            rightMotor.setPower(Math.abs(speed));
+
+            // keep looping while we are still active, and there is time left, and both motors are running.
+            // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
+            // its target position, the motion will stop.  This is "safer" in the event that the robot will
+            // always end the motion as soon as possible.
+            // However, if you require that BOTH motors have finished their moves before the robot continues
+            // onto the next step, use (isBusy() || isBusy()) in the loop test.
+            while (opModeIsActive() &&
+                    (runtime.seconds() < timeoutS) &&
+                    (rightMotor.isBusy())) {
+
+                correction = checkDirection();
+                leftMotor.setPower(speed - correction);
+                //leftMotor.setPower(-speed + correction);
+
+                // Display it for the driver.
+                telemetry.addData("Path1/correction",  "Running to %7d :%7d", newRightTarget, correction);
+                telemetry.addData("Path2",  "Running at %7d :%7d",
+                        leftMotor.getCurrentPosition(),
+                        rightMotor.getCurrentPosition());
+                telemetry.update();
+            }
+
+            // Stop all motion;
+            leftMotor.setPower(0);
+            rightMotor.setPower(0);
+
+            // Turn off RUN_TO_POSITION
+            //leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            sleep(1);   // optional pause after each move
+        }
+    }
+
 }
 
