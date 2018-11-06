@@ -36,6 +36,15 @@ public class Autonomous2844 extends LinearOpMode
     static final double RobotDiameter = 11.3;
     static final double CIRCUMFERENCE = RobotDiameter * 3.1415;
 
+    enum FoundRotationLocation
+    {
+        LEFT,
+        STRAIGHT,
+        RIGHT
+    } ;
+
+    FoundRotationLocation foundRot = FoundRotationLocation.STRAIGHT;
+
    // static final int goldDetectorLeftX = 290;
    // static final int goldDetectorRightX = 340;
 //   static final int goldDetectorLeftX = 280;
@@ -45,8 +54,8 @@ public class Autonomous2844 extends LinearOpMode
     int goldDetectorLeftX = 260;
     int goldDetectorRightX = 320;
 
-    static final int goldIsFoundLeftX = 50;
-    static final int goldIsFoundRightX = 550;
+    static final int goldIsFoundLeftX = 70;
+    static final int goldIsFoundRightX = 530;
 
     public double degToInches (double degrees)
     {
@@ -77,12 +86,16 @@ public class Autonomous2844 extends LinearOpMode
 
         detector.downscale = 0.4;
 
+        detector.SetRequestedYLine(270);
 
         detector.areaScoringMethod = DogeCV.AreaScoringMethod.PERFECT_AREA;
 
         detector.maxAreaScorer.weight = 0.005;
         detector.ratioScorer.weight = 5;
         detector.ratioScorer.perfectRatio = 1.0;
+
+
+
         detector.enable();
 
         // Set all motors to zero power
@@ -167,6 +180,7 @@ public class Autonomous2844 extends LinearOpMode
             if (counter == 0)
             {
                 foundString = "straight";
+                foundRot = FoundRotationLocation.STRAIGHT;
             }
 
 
@@ -178,6 +192,7 @@ public class Autonomous2844 extends LinearOpMode
                 if (counter == 1)
                 {
                     foundString = "right";
+                    foundRot = FoundRotationLocation.RIGHT;
                     System.out.println("ValleyX turning right");
                     //turning right
                     rotate(-10, 0.2);
@@ -188,6 +203,7 @@ public class Autonomous2844 extends LinearOpMode
                 else
                 {
                     foundString = "left";
+                    foundRot = FoundRotationLocation.LEFT;
                     System.out.println("ValleyX turning left");
                     rotate(40, 0.2);
                     motorRight.setPower(0);
@@ -211,7 +227,7 @@ public class Autonomous2844 extends LinearOpMode
                     }
                     else
                     {
-                        encoderDrive(0.6, 35, 35, 6);
+                        encoderDrive(0.6, 28, 28, 6);
 
                         System.out.println("ValleyX cube found and knocked off");
                       break;
@@ -230,20 +246,46 @@ public class Autonomous2844 extends LinearOpMode
                     {
                         System.out.println("ValleyX turning right to align cube x=" + detector.getXPosition());
                         //rotate(-1, 0.1);
-                        encoderDrive(0.2, 0.5, -0.5, 1);
+                        encoderDrive(0.2, 1, -1, 1);
                     }
 
                     else
                     {
                         System.out.println("ValleyX turning left to align cube x=" + detector.getXPosition());
                         //rotate(1, 0.1);
-                        encoderDrive(0.2, -0.5, 0.5, 1);
+                        encoderDrive(0.2, -1, 1, 1);
                     }
                 }
             }
         }
 
-        System.out.println("ValleyX out of loop");
+        System.out.println("ValleyX Gold Detector out of break");
+        encoderDrive(0.6, -25, -25, 6);
+
+        if (foundRot == FoundRotationLocation.LEFT)
+        {
+            System.out.println("ValleyX found left");
+            rotate(5, 0.6);
+            encoderDrive(0.6, 20, 20, 6);
+        }
+
+        if (foundRot == FoundRotationLocation.STRAIGHT)
+        {
+            System.out.println("ValleyX found straight");
+            rotate(20, 0.6);
+            encoderDrive(0.6, 35, 35, 56);
+        }
+
+        if (foundRot == FoundRotationLocation.RIGHT)
+        {
+            System.out.println("ValleyX found right");
+            rotate(35, 0.6);
+            encoderDrive(0.6, 40, 40, 6);
+        }
+
+        rotate(-45, 0.6);
+        //rotate(15, 0.6);
+
 /*
         while (opModeIsActive())
         {
