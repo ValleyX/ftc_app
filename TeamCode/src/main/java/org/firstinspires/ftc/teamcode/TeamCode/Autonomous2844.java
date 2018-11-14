@@ -6,8 +6,10 @@ import com.disnodeteam.dogecv.detectors.roverrukus.GoldAlignDetector;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -28,6 +30,12 @@ public class Autonomous2844 extends LinearOpMode
 
     private DcMotor motorLeft;
     private DcMotor motorRight;
+
+    private DcMotor bottomLift;
+    private Servo hangingServo;
+    private AnalogInput bottomPot;
+
+
     static final double COUNTS_PER_MOTOR_REV  = 28;
     static final double DRIVE_GEAR_REDUCTION = 40.0;
     static final double WHEEL_DIAMETER_INCHES = 4.0;
@@ -68,6 +76,9 @@ public class Autonomous2844 extends LinearOpMode
     {
         motorLeft = hardwareMap.dcMotor.get("lmotor");
         motorRight = hardwareMap.dcMotor.get("rmotor");
+        bottomLift = hardwareMap.dcMotor.get("blift"); // main 2 motor
+        hangingServo = hardwareMap.servo.get("hservo"); // main 0 servo
+        bottomPot = hardwareMap.analogInput.get("bottomPot"); // main 0 analog input
         //leftArm    = hwMap.get(DcMotor.class, "left_arm");
         motorLeft.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         motorRight.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
@@ -86,7 +97,7 @@ public class Autonomous2844 extends LinearOpMode
 
         detector.downscale = 0.4;
 
-        detector.SetRequestedYLine(270);
+        detector.SetRequestedYLine(320);
 
         detector.areaScoringMethod = DogeCV.AreaScoringMethod.PERFECT_AREA;
 
@@ -141,6 +152,53 @@ public class Autonomous2844 extends LinearOpMode
         // and named "imu".
         imu = hardwareMap.get(BNO055IMU.class, "imu");
 
+        /* ---new remapping code --*/
+
+        //byte AXIS_MAP_CONFIG_BYTE = 0x6; //This is what to write to the AXIS_MAP_CONFIG register to swap x and z axes
+        byte AXIS_MAP_CONFIG_BYTE = 0x18; //This is what to write to the AXIS_MAP_CONFIG register to swap y and z axes
+        byte AXIS_MAP_SIGN_BYTE = 0x1; //This is what to write to the AXIS_MAP_SIGN register to negate the z axis
+
+//Need to be in CONFIG mode to write to registers
+        imu.write8(BNO055IMU.Register.OPR_MODE,BNO055IMU.SensorMode.CONFIG.bVal/* & 0x0F*/);
+
+        sleep(100); //Changing modes requires a delay before doing anything else
+
+//Write to the AXIS_MAP_CONFIG register
+        imu.write8(BNO055IMU.Register.AXIS_MAP_CONFIG,AXIS_MAP_CONFIG_BYTE/* & 0x0F*/);
+
+//Write to the AXIS_MAP_SIGN register
+        imu.write8(BNO055IMU.Register.AXIS_MAP_SIGN,AXIS_MAP_SIGN_BYTE/* & 0x0F*/);
+
+//Need to change back into the IMU mode to use the gyro
+        imu.write8(BNO055IMU.Register.OPR_MODE,BNO055IMU.SensorMode.IMU.bVal & 0x0F);
+
+        sleep(100); //Changing modes again requires a delay
+
+        /* ---new remapping code --*/
+
+        System.out.println("ValleyX: Waiting for Start");
+
+        waitForStart();
+        System.out.println("ValleyX: Starting .... ");
+
+        while (bottomPot.getVoltage() < 1.11) // drop robot
+        {
+            bottomLift.setPower(0.6); // turn on motor
+        }
+        bottomLift.setPower(0.0); // turn off motor
+
+        hangingServo.setPosition(1.0); // release servo
+        sleep(1000); // break in between to give time for servo to release
+
+        while (bottomPot.getVoltage() > 0.8) // lower arm down w/o touch sensor
+        {
+            bottomLift.setPower(-0.6); // turn on motor
+        }
+        bottomLift.setPower(0.0); // turn off motor
+
+
+        // lower arm back down (touch sensor)?
+
         imu.initialize(parameters);
 
         telemetry.addData("Mode", "calibrating...");
@@ -153,10 +211,10 @@ public class Autonomous2844 extends LinearOpMode
             idle();
         }
 
-        System.out.println("ValleyX: Waiting for Start");
+        telemetry.addData("Mode", "calibrated");
+        telemetry.update();
 
-        waitForStart();
-        System.out.println("ValleyX: Starting .... ");
+        //while (opModeIsActive());
 
         int counter = 0;
 
@@ -223,7 +281,8 @@ public class Autonomous2844 extends LinearOpMode
                     //drive forward
                     if (alignCount == 0)
                     {
-                        encoderDrive(0.6, 10, 10, 6);
+//                        encoderDrive(0.6, 10, 10, 6);
+                        encoderDrive(0.6, 5, 5, 6);
                     }
                     else
                     {
@@ -260,30 +319,30 @@ public class Autonomous2844 extends LinearOpMode
         }
 
         System.out.println("ValleyX Gold Detector out of break");
-        encoderDrive(0.6, -25, -25, 6);
+        //encoderDrive(0.6, -25, -25, 6);
 
         if (foundRot == FoundRotationLocation.LEFT)
         {
             System.out.println("ValleyX found left");
-            rotate(5, 0.6);
-            encoderDrive(0.6, 20, 20, 6);
+            //rotate(5, 0.6);
+            //encoderDrive(0.6, 20, 20, 6);
         }
 
         if (foundRot == FoundRotationLocation.STRAIGHT)
         {
             System.out.println("ValleyX found straight");
-            rotate(20, 0.6);
-            encoderDrive(0.6, 35, 35, 56);
+            //rotate(20, 0.6);
+            //encoderDrive(0.6, 35, 35, 56);
         }
 
         if (foundRot == FoundRotationLocation.RIGHT)
         {
             System.out.println("ValleyX found right");
-            rotate(35, 0.6);
-            encoderDrive(0.6, 40, 40, 6);
+            //rotate(35, 0.6);
+            //encoderDrive(0.6, 40, 40, 6);
         }
 
-        rotate(-45, 0.6);
+       // rotate(-45, 0.6);
         //rotate(15, 0.6);
 
 /*

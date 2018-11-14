@@ -18,24 +18,26 @@ public class TeleOp2844 extends LinearOpMode
     private DcMotor intake;
     private DigitalChannel digitalTouch;
     private AnalogInput bottomPot;
-    private AnalogInput topPot;
+    //private AnalogInput topPot;
     private Servo hangingServo;
 
 
 
     @Override
-    public void runOpMode() throws InterruptedException {
+    public void runOpMode() throws InterruptedException
+    {
         System.out.println("ValleyX runOpMode");
 
-        motorLeft = hardwareMap.dcMotor.get("lmotor");
-        motorRight = hardwareMap.dcMotor.get("rmotor");
-        bottomLift = hardwareMap.dcMotor.get("blift");
-        topLift = hardwareMap.dcMotor.get("tlift");
-        intake = hardwareMap.dcMotor.get("intake");
-        digitalTouch = hardwareMap.get(DigitalChannel.class, "touch");
-        bottomPot = hardwareMap.analogInput.get("bottomPot");
-        topPot = hardwareMap.analogInput.get("topPot");
-        hangingServo = hardwareMap.servo.get("hservo");
+        motorLeft = hardwareMap.dcMotor.get("lmotor"); // main 1 motor
+        motorRight = hardwareMap.dcMotor.get("rmotor"); // main 0 motor
+        bottomLift = hardwareMap.dcMotor.get("blift"); // main 2 motor
+        topLift = hardwareMap.dcMotor.get("tlift"); // main 3 motor
+        intake = hardwareMap.dcMotor.get("intake"); // secondary 0 motor
+        digitalTouch = hardwareMap.get(DigitalChannel.class, "touch"); // secondary 0 digital device
+        digitalTouch.setMode(DigitalChannel.Mode.INPUT);
+        bottomPot = hardwareMap.analogInput.get("bottomPot"); // main 0 analog input
+        //topPot = hardwareMap.analogInput.get("topPot"); // not installed yet
+        hangingServo = hardwareMap.servo.get("hservo"); // main 0 servo
 
 
         motorLeft.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -44,32 +46,31 @@ public class TeleOp2844 extends LinearOpMode
         double gamepad1RightStickY;
         double gamepad2LeftStickY;
         double gamepad2RightStickY;
+        double gamepad1LeftTrigger;
 
         waitForStart();
 
         System.out.println("ValleyX started");
 
-        while (opModeIsActive()) {
+        while (opModeIsActive())
+        {
             gamepad1LeftStickY = gamepad1.left_stick_y;
             gamepad1RightStickY = gamepad1.right_stick_y;
             gamepad2LeftStickY = gamepad2.left_stick_y;
             gamepad2RightStickY = gamepad2.right_stick_y;
+            gamepad1LeftTrigger = gamepad1.left_trigger;
 
             telemetry.addData("gp1", "  leftY=" + gamepad1LeftStickY + "  rightY=" + gamepad1RightStickY);
-            telemetry.update();
 
-            motorLeft.setPower(gamepad1LeftStickY);
-            motorRight.setPower(gamepad1RightStickY);
-
-            //bottomLift // button needs 4 positions --> start, intake, hanging, and unloading into lander
-            //topLift.setPower(gamepad2LeftStickY);
-
-            //intake // ?
+            motorLeft.setPower(-gamepad1LeftStickY);
+            motorRight.setPower(-gamepad1RightStickY);
 
             if (gamepad2.y == true) //pressed
             {
                 // move bottom lift to zero/starting pos
                 System.out.println("ValleyX Y button pressed");
+                motorLeft.setPower(0.0);
+                motorRight.setPower(0.0);
                 while (digitalTouch.getState() == true) // true means not pressed
                 {
                     bottomLift.setPower(-0.6);
@@ -82,7 +83,10 @@ public class TeleOp2844 extends LinearOpMode
             {
                 // move bottom lift to intake pos
                 System.out.println("ValleyX X button pressed");
-                while (bottomPot.getVoltage() < 2.0) {
+                motorLeft.setPower(0.0);
+                motorRight.setPower(0.0);
+                while (bottomPot.getVoltage() < 2.0) // change!!!
+                {
                     bottomLift.setPower(0.6);
                 }
                 bottomLift.setPower(0.0);
@@ -92,7 +96,9 @@ public class TeleOp2844 extends LinearOpMode
             {
                 // move bottom lift to hanging pos
                 System.out.println("ValleyX A button pressed");
-                while (topPot.getVoltage() < 1.5)
+                motorLeft.setPower(0.0);
+                motorRight.setPower(0.0);
+                while (bottomPot.getVoltage() < 1.5) // change!!!
                 {
                     topLift.setPower(0.6);
                 }
@@ -103,17 +109,24 @@ public class TeleOp2844 extends LinearOpMode
             {
                 // move bottom lift to unloading pos
                 System.out.println("ValleyX B button pressed");
-                while (topPot.getVoltage() < 1.0)
+                motorLeft.setPower(0.0);
+                motorRight.setPower(0.0);
+                while (bottomPot.getVoltage() < 1.0) // change!!!
                 {
-                    topLift.setPower(0.6);
+                    bottomLift.setPower(0.6);
                 }
-                topLift.setPower(0.0);
+                bottomLift.setPower(0.0);
 
                 idle();
             }
+
             if (gamepad2.left_bumper == true) // motor for intake --> foam thingies
             {
-                intake.setPower(0.6);
+                intake.setPower(0.6); // as long as the bumper is held down
+            }
+            if (gamepad2.right_bumper == true) // motor for intake --> foam thingies
+            {
+                intake.setPower(-0.6); // as long as the bumper is held down
             }
             else
             {
@@ -121,18 +134,21 @@ public class TeleOp2844 extends LinearOpMode
             }
             if (gamepad1.x == true) // true means pressed
             {
-                //hanging servo opening
-                hangingServo.setPosition(2.0);
+                // hanging servo opening
+                hangingServo.setPosition(1.0);
             }
             if (gamepad1.y == true)
             {
-                // haning servo closing
+                // hanging servo closing
                 hangingServo.setPosition(0.0);
             }
-            bottomLift.setPower(gamepad2LeftStickY);
-            topLift.setPower(gamepad2RightStickY);
-            telemetry.addData("topPot values", topPot.getVoltage());
-            telemetry.addData("bottomPot", bottomPot.getVoltage());
+            bottomLift.setPower(gamepad2LeftStickY/2);
+            topLift.setPower(gamepad2RightStickY/2);
+            //telemetry.addData("topPot values ", topPot.getVoltage());
+            telemetry.addData("bottomPot values ", bottomPot.getVoltage());
+            telemetry.addData("servo values", hangingServo.getPosition());
+            telemetry.addData("trigger values", gamepad1LeftTrigger);
+            telemetry.addData("touch", digitalTouch.getState());
             telemetry.update();
         } // while opmode is active
     } // run op mode
