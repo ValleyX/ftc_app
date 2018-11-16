@@ -18,7 +18,7 @@ public class TeleOp2844 extends LinearOpMode
     private DcMotor intake;
     private DigitalChannel digitalTouch;
     private AnalogInput bottomPot;
-    //private AnalogInput topPot;
+    //private AnalogInput topPot; // additional potentiameter to be added on top lift
     private Servo hangingServo;
 
 
@@ -85,7 +85,7 @@ public class TeleOp2844 extends LinearOpMode
                 System.out.println("ValleyX X button pressed");
                 motorLeft.setPower(0.0);
                 motorRight.setPower(0.0);
-                while (bottomPot.getVoltage() < 2.0) // change!!!
+                while (bottomPot.getVoltage() < 2.793)
                 {
                     bottomLift.setPower(0.6);
                 }
@@ -98,11 +98,11 @@ public class TeleOp2844 extends LinearOpMode
                 System.out.println("ValleyX A button pressed");
                 motorLeft.setPower(0.0);
                 motorRight.setPower(0.0);
-                while (bottomPot.getVoltage() < 1.5) // change!!!
+                while (bottomPot.getVoltage() < 1.167)
                 {
-                    topLift.setPower(0.6);
+                    bottomLift.setPower(0.6);
                 }
-                topLift.setPower(0.0);
+                bottomLift.setPower(0.0);
             }
 
             if (gamepad2.b == true) // pressed
@@ -111,7 +111,7 @@ public class TeleOp2844 extends LinearOpMode
                 System.out.println("ValleyX B button pressed");
                 motorLeft.setPower(0.0);
                 motorRight.setPower(0.0);
-                while (bottomPot.getVoltage() < 1.0) // change!!!
+                while (bottomPot.getVoltage() < 1.0)
                 {
                     bottomLift.setPower(0.6);
                 }
@@ -120,11 +120,11 @@ public class TeleOp2844 extends LinearOpMode
                 idle();
             }
 
-            if (gamepad2.left_bumper == true) // motor for intake --> foam thingies
+            if (gamepad2.left_bumper == true) // motor for intake --> foam pieces
             {
                 intake.setPower(0.6); // as long as the bumper is held down
             }
-            if (gamepad2.right_bumper == true) // motor for intake --> foam thingies
+            if (gamepad2.right_bumper == true) // motor for intake --> foam pieces
             {
                 intake.setPower(-0.6); // as long as the bumper is held down
             }
@@ -142,8 +142,8 @@ public class TeleOp2844 extends LinearOpMode
                 // hanging servo closing
                 hangingServo.setPosition(0.0);
             }
-            bottomLift.setPower(gamepad2LeftStickY/2);
-            topLift.setPower(gamepad2RightStickY/2);
+            bottomLift.setPower(-gamepad2LeftStickY);
+            topLift.setPower(gamepad2RightStickY);
             //telemetry.addData("topPot values ", topPot.getVoltage());
             telemetry.addData("bottomPot values ", bottomPot.getVoltage());
             telemetry.addData("servo values", hangingServo.getPosition());

@@ -24,7 +24,7 @@ public class Autonomous2844 extends LinearOpMode
 
     BNO055IMU imu;
     Orientation lastAngles = new Orientation();
-    double globalAngle, power = .30, correction;
+    double globalAngle, power = .30;
 
     private GoldAlignDetector detector;
 
@@ -34,37 +34,37 @@ public class Autonomous2844 extends LinearOpMode
     private DcMotor bottomLift;
     private Servo hangingServo;
     private AnalogInput bottomPot;
+    private DigitalChannel digitalTouch;
 
 
-    static final double COUNTS_PER_MOTOR_REV  = 28;
-    static final double DRIVE_GEAR_REDUCTION = 40.0;
-    static final double WHEEL_DIAMETER_INCHES = 4.0;
+    static final double COUNTS_PER_MOTOR_REV  = 28;   //hw spec for rev motor encoder
+    static final double DRIVE_GEAR_REDUCTION = 40.0;  //gear reduction for wheel motor
+    static final double WHEEL_DIAMETER_INCHES = 4.0;  //wheel diameter
     static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
-            (WHEEL_DIAMETER_INCHES * 3.1415);
-    static final double RobotDiameter = 11.3;
-    static final double CIRCUMFERENCE = RobotDiameter * 3.1415;
+            (WHEEL_DIAMETER_INCHES * 3.1415); //calculate number of encoder counts per inch
 
-    enum FoundRotationLocation
+    //parms to use encoders for rotating at angles
+    static final double RobotDiameter = 11.3; // diameter of robot between wheels
+    static final double CIRCUMFERENCE = RobotDiameter * 3.1415; // circumference of circle formed when robot makes 360 turn
+
+    enum FoundRotationLocation // to store where the gold cube was found
     {
         LEFT,
         STRAIGHT,
         RIGHT
     } ;
 
-    FoundRotationLocation foundRot = FoundRotationLocation.STRAIGHT;
+    FoundRotationLocation foundRot = FoundRotationLocation.STRAIGHT; // default to straight
 
-   // static final int goldDetectorLeftX = 290;
-   // static final int goldDetectorRightX = 340;
-//   static final int goldDetectorLeftX = 280;
-//    static final int goldDetectorRightX = 300;
- //  int goldDetectorLeftX = 280;
- //   int goldDetectorRightX = 300;
+    // initial aligned x and y dimentions
     int goldDetectorLeftX = 260;
     int goldDetectorRightX = 320;
 
+    // final aligned x and y dementions --> moved over because of phone position
     static final int goldIsFoundLeftX = 70;
     static final int goldIsFoundRightX = 530;
 
+    //converts degrees to inches for the given bot
     public double degToInches (double degrees)
     {
         return (((1.0/360.0)* degrees) * CIRCUMFERENCE);
@@ -74,16 +74,16 @@ public class Autonomous2844 extends LinearOpMode
     @Override
     public void runOpMode() throws InterruptedException
     {
-        motorLeft = hardwareMap.dcMotor.get("lmotor");
-        motorRight = hardwareMap.dcMotor.get("rmotor");
+        motorLeft = hardwareMap.dcMotor.get("lmotor"); // main 1 motor
+        motorRight = hardwareMap.dcMotor.get("rmotor"); // main 0 motor
         bottomLift = hardwareMap.dcMotor.get("blift"); // main 2 motor
         hangingServo = hardwareMap.servo.get("hservo"); // main 0 servo
         bottomPot = hardwareMap.analogInput.get("bottomPot"); // main 0 analog input
-        //leftArm    = hwMap.get(DcMotor.class, "left_arm");
+        digitalTouch = hardwareMap.get(DigitalChannel.class, "touch"); // secondary 0 digital device
+        digitalTouch.setMode(DigitalChannel.Mode.INPUT);
+
         motorLeft.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         motorRight.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
-        //leftDrive.setDirection(DcMotor.Direction.FORWARD); // Set to REVERSE if using AndyMark motors
-        //rightDrive.setDirection(DcMotor.Direction.REVERSE);// Set to FORWARD if using AndyMark motors
 
         detector = new GoldAlignDetector();
 
@@ -97,7 +97,8 @@ public class Autonomous2844 extends LinearOpMode
 
         detector.downscale = 0.4;
 
-        detector.SetRequestedYLine(320);
+        detector.SetRequestedYLine(320); //enhancement to doge detector to only consider scoring
+                                            //matches >= the Y line
 
         detector.areaScoringMethod = DogeCV.AreaScoringMethod.PERFECT_AREA;
 
@@ -105,28 +106,18 @@ public class Autonomous2844 extends LinearOpMode
         detector.ratioScorer.weight = 5;
         detector.ratioScorer.perfectRatio = 1.0;
 
-
-
         detector.enable();
 
         // Set all motors to zero power
         motorLeft.setPower(0);
         motorRight.setPower(0);
-        // leftArm.setPower(0);
 
         // Set all motors to run without encoders.
         // May want to use RUN_USING_ENCODERS if encoders are installed.
         motorLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         motorRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        //leftArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        // Define and initialize ALL installed servos.
-        //leftClaw  = hwMap.get(Servo.class, "servo0");
-        //rightClaw = hwMap.get(Servo.class, "servo1");
-        //leftClaw.setPosition(MID_SERVO);
-        //rightClaw.setPosition(MID_SERVO);
-
-        telemetry.addData("Status", "Resetting Encoders");    //
+        telemetry.addData("Status", "Resetting Encoders");
         telemetry.update();
 
         motorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -135,12 +126,7 @@ public class Autonomous2844 extends LinearOpMode
         motorLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         motorRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        //motorLeft = hardwareMap.dcMotor.get("lmotor");
-        //motorRight = hardwareMap.dcMotor.get("rmotor");
-
-        //motorLeft.setDirection(DcMotor.Direction.REVERSE);
-
-        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters(); // inertial motion unit
 
         parameters.mode                = BNO055IMU.SensorMode.IMU;
         parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
@@ -153,28 +139,28 @@ public class Autonomous2844 extends LinearOpMode
         imu = hardwareMap.get(BNO055IMU.class, "imu");
 
         /* ---new remapping code --*/
+        //swapping y & z axis due to vertical mounting of rev expansion board
 
         //byte AXIS_MAP_CONFIG_BYTE = 0x6; //This is what to write to the AXIS_MAP_CONFIG register to swap x and z axes
         byte AXIS_MAP_CONFIG_BYTE = 0x18; //This is what to write to the AXIS_MAP_CONFIG register to swap y and z axes
         byte AXIS_MAP_SIGN_BYTE = 0x1; //This is what to write to the AXIS_MAP_SIGN register to negate the z axis
 
-//Need to be in CONFIG mode to write to registers
-        imu.write8(BNO055IMU.Register.OPR_MODE,BNO055IMU.SensorMode.CONFIG.bVal/* & 0x0F*/);
+        //Need to be in CONFIG mode to write to registers
+        imu.write8(BNO055IMU.Register.OPR_MODE,BNO055IMU.SensorMode.CONFIG.bVal);
 
         sleep(100); //Changing modes requires a delay before doing anything else
 
-//Write to the AXIS_MAP_CONFIG register
-        imu.write8(BNO055IMU.Register.AXIS_MAP_CONFIG,AXIS_MAP_CONFIG_BYTE/* & 0x0F*/);
+        //Write to the AXIS_MAP_CONFIG register
+        imu.write8(BNO055IMU.Register.AXIS_MAP_CONFIG,AXIS_MAP_CONFIG_BYTE);
 
-//Write to the AXIS_MAP_SIGN register
-        imu.write8(BNO055IMU.Register.AXIS_MAP_SIGN,AXIS_MAP_SIGN_BYTE/* & 0x0F*/);
+        //Write to the AXIS_MAP_SIGN register
+        imu.write8(BNO055IMU.Register.AXIS_MAP_SIGN,AXIS_MAP_SIGN_BYTE);
 
-//Need to change back into the IMU mode to use the gyro
+        //Need to change back into the IMU mode to use the gyro
         imu.write8(BNO055IMU.Register.OPR_MODE,BNO055IMU.SensorMode.IMU.bVal & 0x0F);
 
         sleep(100); //Changing modes again requires a delay
-
-        /* ---new remapping code --*/
+        /* ---new remapping code ---*/
 
         System.out.println("ValleyX: Waiting for Start");
 
@@ -190,14 +176,11 @@ public class Autonomous2844 extends LinearOpMode
         hangingServo.setPosition(1.0); // release servo
         sleep(1000); // break in between to give time for servo to release
 
-        while (bottomPot.getVoltage() > 0.8) // lower arm down w/o touch sensor
+        while ((bottomPot.getVoltage() > 0.8) && (digitalTouch.getState() == true)) // lower arm down w/o touch sensor
         {
             bottomLift.setPower(-0.6); // turn on motor
         }
         bottomLift.setPower(0.0); // turn off motor
-
-
-        // lower arm back down (touch sensor)?
 
         imu.initialize(parameters);
 
@@ -214,16 +197,15 @@ public class Autonomous2844 extends LinearOpMode
         telemetry.addData("Mode", "calibrated");
         telemetry.update();
 
-        //while (opModeIsActive());
+        int counter = 0; // 0=straight, 1=right, 2=left
 
-        int counter = 0;
+        String foundString = "not found"; //default
 
-        String foundString = "not found";
-
-        int alignCount = 0;
+        int alignCount = 0; // 0=first alignment, 1=second alignment
 
         while (opModeIsActive())
         {
+            //refine isfound to be less than what doge detector says
             boolean isFound = (detector.getXPosition() < goldIsFoundRightX) &&
                     (detector.getXPosition() > goldIsFoundLeftX) &&
                     (detector.isFound() == true);
@@ -233,15 +215,11 @@ public class Autonomous2844 extends LinearOpMode
             telemetry.addData("IsFound", isFound); //is the gold in view
             telemetry.update();
 
-
-
             if (counter == 0)
             {
                 foundString = "straight";
                 foundRot = FoundRotationLocation.STRAIGHT;
             }
-
-
 
             if (isFound == false)
             {
@@ -252,73 +230,69 @@ public class Autonomous2844 extends LinearOpMode
                     foundString = "right";
                     foundRot = FoundRotationLocation.RIGHT;
                     System.out.println("ValleyX turning right");
-                    //turning right
-                    rotate(-10, 0.2);
+                    rotate(-10, 0.2); // turning right  to find gold
+                    // turing off motors
                     motorRight.setPower(0);
                     motorLeft.setPower(0);
-                    //break;
                 }
                 else
                 {
                     foundString = "left";
                     foundRot = FoundRotationLocation.LEFT;
                     System.out.println("ValleyX turning left");
-                    rotate(40, 0.2);
+                    rotate(40, 0.2); // turning left to find gold
+                    // turning off motors
                     motorRight.setPower(0);
                     motorLeft.setPower(0);
-
-                    //System.out.println("ValleyX X= " + detector.getXPosition() + " IsFound " + detector.isFound());
-                    //break;
                 }
             }
-
-            else
+            else //is found
             {
                 System.out.println("ValleyX cube is found " + foundString + " X=" + detector.getXPosition() + "Y=" + detector.getYPosition());
                 if ((goldDetectorLeftX < detector.getXPosition()) && (goldDetectorRightX > detector.getXPosition()))
                 {
                     System.out.println("ValleyX cube is aligned x=" + detector.getXPosition());
-                    //drive forward
-                    if (alignCount == 0)
+                    if (alignCount == 0) // drive forward to set up for second alignment
                     {
-//                        encoderDrive(0.6, 10, 10, 6);
                         encoderDrive(0.6, 5, 5, 6);
                     }
-                    else
+                    else //drive forward to knock of cube
                     {
                         encoderDrive(0.6, 28, 28, 6);
 
                         System.out.println("ValleyX cube found and knocked off");
                       break;
                     }
+                    // pushed alignment parameters to the left to account for phone position on bot for second alignment
                     goldDetectorRightX -= 150;
                     goldDetectorLeftX -= 150;
                     goldDetectorRightX += 10;
                     goldDetectorLeftX -= 10;
-                    alignCount++;
+                    alignCount++;  // increment to do second alignment
                 }
-
-                else
+                else //found but not aligned
                 {
                     System.out.println("ValleyX cube found but not aligned x=" + detector.getXPosition());
                     if (detector.getXPosition() < goldDetectorLeftX)
                     {
                         System.out.println("ValleyX turning right to align cube x=" + detector.getXPosition());
-                        //rotate(-1, 0.1);
                         encoderDrive(0.2, 1, -1, 1);
                     }
 
                     else
                     {
                         System.out.println("ValleyX turning left to align cube x=" + detector.getXPosition());
-                        //rotate(1, 0.1);
                         encoderDrive(0.2, -1, 1, 1);
                     }
                 }
             }
         }
 
-        System.out.println("ValleyX Gold Detector out of break");
+        detector.disable();
+
+        // initial steps for next part of autonomous after gold detection --> not working for this event
+
+        /*System.out.println("ValleyX Gold Detector out of break");
         //encoderDrive(0.6, -25, -25, 6);
 
         if (foundRot == FoundRotationLocation.LEFT)
@@ -341,40 +315,10 @@ public class Autonomous2844 extends LinearOpMode
             //rotate(35, 0.6);
             //encoderDrive(0.6, 40, 40, 6);
         }
-
-       // rotate(-45, 0.6);
-        //rotate(15, 0.6);
-
-/*
-        while (opModeIsActive())
-        {
-            boolean isFound = (detector.getXPosition() < goldIsFoundRightX) &&
-                    (detector.getXPosition() > goldIsFoundLeftX) &&
-                    (detector.isFound() == true);
-
-            telemetry.addData("IsAligned", detector.getAligned()); // Is the bot aligned with the gold mineral
-            telemetry.addData("X Pos", detector.getXPosition()); // Gold X pos in the view 270 - 370 is aligned
-            telemetry.addData("IsFound", isFound); //is the gold in view
-            telemetry.update();
-        }
-*/
-        System.out.println("ValleyX: ending");
-        detector.disable();
-
-
-       // System.out.println("ValleyX: Starting .... ");
-        /*
-        encoderDrive(0.3, degToInches(360), -degToInches(360), 5); //move both wheels 12 in at 30% speed
-        encoderDrive(0.3, -degToInches(360), degToInches(360), 5); //move both wheels 12 in at 30% speed
-
-
-        encoderDrive(0.3, 12, 12, 5); //move both wheels 12 in at 30% speed
-        encoderDrive(0.3, -12, -12, 5); //move both wheels 12 in at 30% speed
-        encoderDrive(0.3, 12, 12, 5); //move both wheels 12 in at 30% speed
-        encoderDrive(0.3, -12, -12, 5); //move both wheels 12 in at 30% speed
-        encoderDrive(0.3, degToInches(90), -degToInches(90), 5); //move both wheels 12 in at 30% speed
-        encoderDrive(0.3, -degToInches(90), degToInches(90), 5); //move both wheels 12 in at 30% speed
         */
+
+        System.out.println("ValleyX: ending");
+
     }
     /**
      * Resets the cumulative angle tracking to zero.
