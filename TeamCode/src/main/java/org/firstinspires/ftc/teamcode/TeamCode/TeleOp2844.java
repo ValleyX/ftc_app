@@ -62,8 +62,8 @@ public class TeleOp2844 extends LinearOpMode
 
             telemetry.addData("gp1", "  leftY=" + gamepad1LeftStickY + "  rightY=" + gamepad1RightStickY);
 
-            motorLeft.setPower(-gamepad1LeftStickY);
-            motorRight.setPower(-gamepad1RightStickY);
+            motorLeft.setPower(gamepad1LeftStickY);
+            motorRight.setPower(gamepad1RightStickY);
 
             if (gamepad2.y == true) //pressed
             {

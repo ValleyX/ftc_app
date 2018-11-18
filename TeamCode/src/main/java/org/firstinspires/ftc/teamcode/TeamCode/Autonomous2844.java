@@ -165,6 +165,7 @@ public class Autonomous2844 extends LinearOpMode
         System.out.println("ValleyX: Waiting for Start");
 
         waitForStart();
+
         System.out.println("ValleyX: Starting .... ");
 
         while (bottomPot.getVoltage() < 1.11) // drop robot
@@ -196,6 +197,8 @@ public class Autonomous2844 extends LinearOpMode
 
         telemetry.addData("Mode", "calibrated");
         telemetry.update();
+
+        //encoderDrive(0.3, 2, 2, 1);
 
         int counter = 0; // 0=straight, 1=right, 2=left
 
@@ -286,7 +289,7 @@ public class Autonomous2844 extends LinearOpMode
                     }
                 }
             }
-        }
+        } // while op mode is active
 
         detector.disable();
 
