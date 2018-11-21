@@ -1,12 +1,14 @@
 package org.firstinspires.ftc.teamcode.TeamCode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Autonomous(name="Legs: AutonomousSamanthaLegs", group="Legs")
+@Disabled
 public class AutonomousSamanthaLegs extends LinearOpMode
 {
     HardwareTestLegs robot = new HardwareTestLegs();

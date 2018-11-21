@@ -1,11 +1,13 @@
 package org.firstinspires.ftc.teamcode.TeamCode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
 @TeleOp(name = "TeleOp Samantha", group = "Tutorials")
+@Disabled
 public class SamanthaTeleOp extends LinearOpMode
 {
     private DcMotor motorLeft;
@@ -29,7 +31,7 @@ public class SamanthaTeleOp extends LinearOpMode
         motorLeft.setDirection(DcMotor.Direction.REVERSE);
         //clawServo = hardwareMap.servo.get("servo1");
         //armServo = hardwareMap.servo.get("servo0");
-        //armServo.setPosition(ARM_RETRACTED_POSIION);
+        //armServo.setPosition(ARM_RETRACTED_POSITION);
         double gamepad1LeftStickY;
         double gamepad1RightStickY;
 
