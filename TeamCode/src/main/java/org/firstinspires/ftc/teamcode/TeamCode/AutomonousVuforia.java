@@ -95,7 +95,7 @@ import java.util.List;
  */
 
 @Autonomous(name="Concept: Vuforia Rover Nav", group ="Concept")
-//@Disabled
+@Disabled
 public class AutomonousVuforia extends LinearOpMode {
 
     /*

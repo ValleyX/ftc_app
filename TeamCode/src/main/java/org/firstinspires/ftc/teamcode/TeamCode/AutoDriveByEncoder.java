@@ -31,6 +31,7 @@ package org.firstinspires.ftc.teamcode.TeamCode;
 
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
@@ -67,7 +68,7 @@ import android.graphics.Color;
  */
 
 @Autonomous(name="Pushbot: Auto Drive By Encoder3", group="Pushbot")
-//@Disabled
+@Disabled
 public class AutoDriveByEncoder extends LinearOpMode {
 
     /* Declare OpMode members. */

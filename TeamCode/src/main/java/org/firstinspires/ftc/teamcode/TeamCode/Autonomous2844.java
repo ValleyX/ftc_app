@@ -85,6 +85,7 @@ public class Autonomous2844 extends LinearOpMode
         motorLeft.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         motorRight.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
 
+
         detector = new GoldAlignDetector();
 
         detector.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
@@ -198,7 +199,7 @@ public class Autonomous2844 extends LinearOpMode
         telemetry.addData("Mode", "calibrated");
         telemetry.update();
 
-        //encoderDrive(0.3, 2, 2, 1);
+        encoderDrive(0.3, 2, 2, 1);
 
         int counter = 0; // 0=straight, 1=right, 2=left
 
@@ -261,7 +262,7 @@ public class Autonomous2844 extends LinearOpMode
                     }
                     else //drive forward to knock of cube
                     {
-                        encoderDrive(0.6, 28, 28, 6);
+                        encoderDrive(0.6, 32, 32, 6);
 
                         System.out.println("ValleyX cube found and knocked off");
                       break;
@@ -288,6 +289,11 @@ public class Autonomous2844 extends LinearOpMode
                         encoderDrive(0.2, -1, 1, 1);
                     }
                 }
+            }
+            if (counter == 2)
+            {
+                rotate(30, 0.6);
+                counter = 0;
             }
         } // while op mode is active
 
