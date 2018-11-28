@@ -98,7 +98,7 @@ public class Autonomous2844 extends LinearOpMode
 
         detector.downscale = 0.4;
 
-        detector.SetRequestedYLine(320); //enhancement to doge detector to only consider scoring
+        detector.SetRequestedYLine(365); //enhancement to doge detector to only consider scoring
                                             //matches >= the Y line
 
         detector.areaScoringMethod = DogeCV.AreaScoringMethod.PERFECT_AREA;
@@ -199,8 +199,8 @@ public class Autonomous2844 extends LinearOpMode
         telemetry.addData("Mode", "calibrated");
         telemetry.update();
 
-        encoderDrive(0.3, 2, 2, 1);
 
+        encoderDrive(0.3, 4, 4, 1);
         int counter = 0; // 0=straight, 1=right, 2=left
 
         String foundString = "not found"; //default
@@ -218,6 +218,11 @@ public class Autonomous2844 extends LinearOpMode
             telemetry.addData("X Pos", detector.getXPosition()); // Gold X pos in the view 270 - 370 is aligned
             telemetry.addData("IsFound", isFound); //is the gold in view
             telemetry.update();
+
+            System.out.println("ValleyXIsAligned " + detector.getAligned()); // Is the bot aligned with the gold mineral
+            System.out.println("ValleyXX Pos " + detector.getXPosition()); // Gold X pos in the view 270 - 370 is aligned
+            System.out.println("ValleyXIsFound " + isFound); //is the gold in view
+            System.out.println("ValleyXdetector IsFound " + detector.isFound()); //is the gold in view
 
             if (counter == 0)
             {
@@ -239,33 +244,40 @@ public class Autonomous2844 extends LinearOpMode
                     motorRight.setPower(0);
                     motorLeft.setPower(0);
                 }
-                else
+                else if (counter == 2)
                 {
                     foundString = "left";
                     foundRot = FoundRotationLocation.LEFT;
                     System.out.println("ValleyX turning left");
-                    rotate(40, 0.2); // turning left to find gold
+                    rotate(45, 0.2); // turning left to find gold
                     // turning off motors
                     motorRight.setPower(0);
                     motorLeft.setPower(0);
                 }
+                else if (counter == 3)
+                {
+                    System.out.println("ValleyX: Not found trying again");
+                    rotate(-35, 0.2);
+                    encoderDrive(0.3, 4, 4, 1);
+
+                    counter = 0;
+                }
+
             }
             else //is found
             {
                 System.out.println("ValleyX cube is found " + foundString + " X=" + detector.getXPosition() + "Y=" + detector.getYPosition());
-                if ((goldDetectorLeftX < detector.getXPosition()) && (goldDetectorRightX > detector.getXPosition()))
-                {
+                if ((goldDetectorLeftX < detector.getXPosition()) && (goldDetectorRightX > detector.getXPosition())) {
                     System.out.println("ValleyX cube is aligned x=" + detector.getXPosition());
                     if (alignCount == 0) // drive forward to set up for second alignment
                     {
                         encoderDrive(0.6, 5, 5, 6);
-                    }
-                    else //drive forward to knock of cube
+                    } else //drive forward to knock of cube
                     {
                         encoderDrive(0.6, 32, 32, 6);
 
                         System.out.println("ValleyX cube found and knocked off");
-                      break;
+                        break;
                     }
                     // pushed alignment parameters to the left to account for phone position on bot for second alignment
                     goldDetectorRightX -= 150;
@@ -273,28 +285,19 @@ public class Autonomous2844 extends LinearOpMode
                     goldDetectorRightX += 10;
                     goldDetectorLeftX -= 10;
                     alignCount++;  // increment to do second alignment
-                }
-                else //found but not aligned
+                } else //found but not aligned
                 {
                     System.out.println("ValleyX cube found but not aligned x=" + detector.getXPosition());
-                    if (detector.getXPosition() < goldDetectorLeftX)
-                    {
+                    if (detector.getXPosition() < goldDetectorLeftX) {
                         System.out.println("ValleyX turning right to align cube x=" + detector.getXPosition());
                         encoderDrive(0.2, 1, -1, 1);
-                    }
-
-                    else
-                    {
+                    } else {
                         System.out.println("ValleyX turning left to align cube x=" + detector.getXPosition());
                         encoderDrive(0.2, -1, 1, 1);
                     }
                 }
             }
-            if (counter == 2)
-            {
-                rotate(30, 0.6);
-                counter = 0;
-            }
+            System.out.println("ValleyX: counter " + counter);
         } // while op mode is active
 
         detector.disable();
