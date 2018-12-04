@@ -165,6 +165,9 @@ public class Autonomous2844 extends LinearOpMode
 
         System.out.println("ValleyX: Waiting for Start");
 
+        telemetry.addData("Status", "Ready for Start");
+        telemetry.update();
+
         waitForStart();
 
         System.out.println("ValleyX: Starting .... ");
@@ -274,7 +277,7 @@ public class Autonomous2844 extends LinearOpMode
                         encoderDrive(0.6, 5, 5, 6);
                     } else //drive forward to knock of cube
                     {
-                        encoderDrive(0.6, 32, 32, 6);
+                        encoderDrive(1, 32, 32, 6);
 
                         System.out.println("ValleyX cube found and knocked off");
                         break;
