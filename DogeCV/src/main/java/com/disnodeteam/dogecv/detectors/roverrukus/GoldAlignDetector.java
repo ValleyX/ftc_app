@@ -86,6 +86,10 @@ public class GoldAlignDetector extends DogeCVDetector {
         Rect bestRect = null;
         double bestDiffrence = Double.MAX_VALUE; // MAX_VALUE since less diffrence = better
 
+        Point left = new Point(0, RequestedYLine);
+        Point right = new Point(600, RequestedYLine);
+        Imgproc.line (displayMat, left, right, new Scalar(255,0,0), 2);
+
         // Loop through the contours and score them, searching for the best result
         for(MatOfPoint cont : contoursYellow){
             double score = calculateScore(cont); // Get the diffrence score using the scoring API
