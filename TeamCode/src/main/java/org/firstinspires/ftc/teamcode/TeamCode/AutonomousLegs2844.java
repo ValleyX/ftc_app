@@ -17,8 +17,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
-@Autonomous(name="Robot: Autonomous2844", group="TeamCode")
-public class Autonomous2844 extends LinearOpMode
+@Autonomous(name="Robot: AutonomousLegs2844", group="TeamCode")
+public class AutonomousLegs2844 extends LinearOpMode
 {
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -30,11 +30,6 @@ public class Autonomous2844 extends LinearOpMode
 
     private DcMotor motorLeft;
     private DcMotor motorRight;
-
-    private DcMotor bottomLift;
-    private Servo hangingServo;
-    private AnalogInput bottomPot;
-    private DigitalChannel digitalTouch;
 
 
     static final double COUNTS_PER_MOTOR_REV  = 28;   //hw spec for rev motor encoder
@@ -76,11 +71,6 @@ public class Autonomous2844 extends LinearOpMode
     {
         motorLeft = hardwareMap.dcMotor.get("lmotor"); // main 1 motor
         motorRight = hardwareMap.dcMotor.get("rmotor"); // main 0 motor
-        bottomLift = hardwareMap.dcMotor.get("blift"); // main 2 motor
-        hangingServo = hardwareMap.servo.get("hservo"); // main 0 servo
-        bottomPot = hardwareMap.analogInput.get("bottomPot"); // main 0 analog input
-        digitalTouch = hardwareMap.get(DigitalChannel.class, "touch"); // secondary 0 digital device
-        digitalTouch.setMode(DigitalChannel.Mode.INPUT);
 
         motorLeft.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         motorRight.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
@@ -98,10 +88,11 @@ public class Autonomous2844 extends LinearOpMode
 
         detector.downscale = 0.4;
 
-        detector.SetRequestedYLine(365); //enhancement to doge detector to only consider scoring
+        detector.SetRequestedYLine(310); //enhancement to doge detector to only consider scoring
                                             //matches >= the Y line
 
-        detector.areaScoringMethod = DogeCV.AreaScoringMethod.PERFECT_AREA;
+        //detector.areaScoringMethod = DogeCV.AreaScoringMethod.PERFECT_AREA;
+        detector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA;
 
         detector.maxAreaScorer.weight = 0.005;
         detector.ratioScorer.weight = 5;
@@ -140,6 +131,7 @@ public class Autonomous2844 extends LinearOpMode
         imu = hardwareMap.get(BNO055IMU.class, "imu");
 
         /* ---new remapping code --*/
+        /*
         //swapping y & z axis due to vertical mounting of rev expansion board
 
         //byte AXIS_MAP_CONFIG_BYTE = 0x6; //This is what to write to the AXIS_MAP_CONFIG register to swap x and z axes
@@ -161,6 +153,7 @@ public class Autonomous2844 extends LinearOpMode
         imu.write8(BNO055IMU.Register.OPR_MODE,BNO055IMU.SensorMode.IMU.bVal & 0x0F);
 
         sleep(100); //Changing modes again requires a delay
+        */
         /* ---new remapping code ---*/
 
         System.out.println("ValleyX: Waiting for Start");
@@ -171,21 +164,6 @@ public class Autonomous2844 extends LinearOpMode
         waitForStart();
 
         System.out.println("ValleyX: Starting .... ");
-
-        while (bottomPot.getVoltage() < 1.11) // drop robot
-        {
-            bottomLift.setPower(0.6); // turn on motor
-        }
-        bottomLift.setPower(0.0); // turn off motor
-
-        hangingServo.setPosition(1.0); // release servo
-        sleep(1000); // break in between to give time for servo to release
-
-        while ((bottomPot.getVoltage() > 0.8) && (digitalTouch.getState() == true)) // lower arm down w/o touch sensor
-        {
-            bottomLift.setPower(-0.6); // turn on motor
-        }
-        bottomLift.setPower(0.0); // turn off motor
 
         imu.initialize(parameters);
 
@@ -275,11 +253,11 @@ public class Autonomous2844 extends LinearOpMode
                     if (alignCount == 0) // drive forward to set up for second alignment
                     {
                         encoderDrive(0.6, 5, 5, 6);
-                    } else //drive forward to knock of cube
+                    } else //drive forward to knock off cube
                     {
-                        encoderDrive(1, 32, 32, 6);
+                        //encoderDrive(1, 24, 24, 6);
 
-                        System.out.println("ValleyX cube found and knocked off");
+                        //System.out.println("ValleyX cube found and knocked off");
                         break;
                     }
                     // pushed alignment parameters to the left to account for phone position on bot for second alignment
@@ -288,7 +266,8 @@ public class Autonomous2844 extends LinearOpMode
                     goldDetectorRightX += 10;
                     goldDetectorLeftX -= 10;
                     alignCount++;  // increment to do second alignment
-                } else //found but not aligned
+                }
+                else //found but not aligned
                 {
                     System.out.println("ValleyX cube found but not aligned x=" + detector.getXPosition());
                     if (detector.getXPosition() < goldDetectorLeftX) {
@@ -307,30 +286,36 @@ public class Autonomous2844 extends LinearOpMode
 
         // initial steps for next part of autonomous after gold detection --> not working for this event
 
-        /*System.out.println("ValleyX Gold Detector out of break");
+        System.out.println("ValleyX Gold Detector out of break");
         //encoderDrive(0.6, -25, -25, 6);
 
         if (foundRot == FoundRotationLocation.LEFT)
         {
             System.out.println("ValleyX found left");
-            //rotate(5, 0.6);
-            //encoderDrive(0.6, 20, 20, 6);
+            encoderDrive(1, 22, 22, 5);
+            encoderDrive(0.6, -17, -17, 5);
+            rotate(45, 0.2);
+            encoderDrive(0.6, 35, 35, 6);
         }
 
         if (foundRot == FoundRotationLocation.STRAIGHT)
         {
             System.out.println("ValleyX found straight");
-            //rotate(20, 0.6);
-            //encoderDrive(0.6, 35, 35, 56);
+            encoderDrive(1, 20, 20, 5);
+            encoderDrive(0.6, -17, -17, 5);
+            rotate(70, 0.2);
+            encoderDrive(0.6, 40, 40, 56);
         }
 
         if (foundRot == FoundRotationLocation.RIGHT)
         {
             System.out.println("ValleyX found right");
-            //rotate(35, 0.6);
-            //encoderDrive(0.6, 40, 40, 6);
+            encoderDrive(1, 24, 24, 5);
+            encoderDrive(0.6, -17, -17, 5);
+            rotate(95, 0.2);
+            encoderDrive(0.6, 45, 45, 6);
         }
-        */
+
 
         System.out.println("ValleyX: ending");
 
