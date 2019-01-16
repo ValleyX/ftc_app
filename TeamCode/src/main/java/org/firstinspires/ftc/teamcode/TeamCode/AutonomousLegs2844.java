@@ -4,17 +4,21 @@ import com.disnodeteam.dogecv.CameraViewDisplay;
 import com.disnodeteam.dogecv.DogeCV;
 import com.disnodeteam.dogecv.detectors.roverrukus.GoldAlignDetector;
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 @Autonomous(name="Robot: AutonomousLegs2844", group="TeamCode")
@@ -24,6 +28,7 @@ public class AutonomousLegs2844 extends LinearOpMode
 
     BNO055IMU imu;
     Orientation lastAngles = new Orientation();
+    Orientation resetMark = new Orientation();
     double globalAngle, power = .30;
 
     private GoldAlignDetector detector;
@@ -31,6 +36,11 @@ public class AutonomousLegs2844 extends LinearOpMode
     private DcMotor motorLeft;
     private DcMotor motorRight;
 
+    private DistanceSensor sensorRangeFront;
+    OpticalDistanceSensor odsFront;
+
+    private DistanceSensor sensorRangeBack;
+    OpticalDistanceSensor odsBack;
 
     static final double COUNTS_PER_MOTOR_REV  = 28;   //hw spec for rev motor encoder
     static final double DRIVE_GEAR_REDUCTION = 40.0;  //gear reduction for wheel motor
@@ -59,6 +69,15 @@ public class AutonomousLegs2844 extends LinearOpMode
     static final int goldIsFoundLeftX = 70;
     static final int goldIsFoundRightX = 530;
 
+    // depot start
+    //int rightAngle = -90;
+    //int heading = -65;
+    // crater start
+    int rightAngle = 90;
+    int heading = 65;
+
+    int driveExtra = 7;
+
     //converts degrees to inches for the given bot
     public double degToInches (double degrees)
     {
@@ -75,6 +94,14 @@ public class AutonomousLegs2844 extends LinearOpMode
         motorLeft.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         motorRight.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
 
+        sensorRangeFront = hardwareMap.get(DistanceSensor.class, "odsFront");
+        sensorRangeBack = hardwareMap.get(DistanceSensor.class, "odsBack");
+
+        // you can also cast this to a Rev2mDistanceSensor if you want to use added
+        // methods associated with the Rev2mDistanceSensor class.
+        Rev2mDistanceSensor distanceFront = (Rev2mDistanceSensor)sensorRangeFront;
+        Rev2mDistanceSensor distanceLeft = (Rev2mDistanceSensor)sensorRangeBack;
+
 
         detector = new GoldAlignDetector();
 
@@ -88,7 +115,7 @@ public class AutonomousLegs2844 extends LinearOpMode
 
         detector.downscale = 0.4;
 
-        detector.SetRequestedYLine(310); //enhancement to doge detector to only consider scoring
+        detector.SetRequestedYLine(290); //enhancement to doge detector to only consider scoring
                                             //matches >= the Y line
 
         //detector.areaScoringMethod = DogeCV.AreaScoringMethod.PERFECT_AREA;
@@ -163,6 +190,26 @@ public class AutonomousLegs2844 extends LinearOpMode
 
         waitForStart();
 
+        /*
+        encoderDrive(0.6, 36,36, 6, true);
+
+        sleep(1000);
+
+        encoderDrive(0.6, -36,-36, 6, false);
+
+
+        while (opModeIsActive());
+        */
+/*
+        while (opModeIsActive())
+        {
+            telemetry.addData("front", sensorRangeFront.getDistance(DistanceUnit.INCH));
+            telemetry.addData("back", sensorRangeBack.getDistance(DistanceUnit.INCH));
+            //telemetry.addData("left", sensorRangeLeft.getDistance(DistanceUnit.INCH));
+            //telemetry.addData("right", sensorRangeRight.getDistance(DistanceUnit.INCH));
+            telemetry.update();
+        }
+*/
         System.out.println("ValleyX: Starting .... ");
 
         imu.initialize(parameters);
@@ -187,6 +234,15 @@ public class AutonomousLegs2844 extends LinearOpMode
         String foundString = "not found"; //default
 
         int alignCount = 0; // 0=first alignment, 1=second alignment
+
+/*
+        while (opModeIsActive())
+        {
+            telemetry.addData("rangeFront", String.format("%.01f in", sensorRangeFront.getDistance(DistanceUnit.INCH)));
+            telemetry.addData("rangeLeft", String.format("%.01f in", sensorRangeLeft.getDistance(DistanceUnit.INCH)));
+            telemetry.update();
+        }
+*/
 
         while (opModeIsActive())
         {
@@ -295,7 +351,8 @@ public class AutonomousLegs2844 extends LinearOpMode
             encoderDrive(1, 22, 22, 5);
             encoderDrive(0.6, -17, -17, 5);
             rotate(45, 0.2);
-            encoderDrive(0.6, 35, 35, 6);
+            encoderDrive(0.6, 15+driveExtra, 15+driveExtra, 6);
+            rotate(-30, 0.2);
         }
 
         if (foundRot == FoundRotationLocation.STRAIGHT)
@@ -304,7 +361,8 @@ public class AutonomousLegs2844 extends LinearOpMode
             encoderDrive(1, 20, 20, 5);
             encoderDrive(0.6, -17, -17, 5);
             rotate(70, 0.2);
-            encoderDrive(0.6, 40, 40, 56);
+            encoderDrive(0.6, 22+driveExtra, 22+driveExtra, 6);
+            rotate(-30, 0.2);
         }
 
         if (foundRot == FoundRotationLocation.RIGHT)
@@ -313,21 +371,187 @@ public class AutonomousLegs2844 extends LinearOpMode
             encoderDrive(1, 24, 24, 5);
             encoderDrive(0.6, -17, -17, 5);
             rotate(95, 0.2);
-            encoderDrive(0.6, 45, 45, 6);
+            encoderDrive(0.6, 27+driveExtra, 27+driveExtra, 6);
+            rotate(-30, 0.2);
+        }
+
+        // drive up to wall
+        motorLeft.setPower(0.6);
+        motorRight.setPower(0.6);
+
+        // drive 4 innches from the wall
+        while ((sensorRangeFront.getDistance(DistanceUnit.INCH) > 4.0) && opModeIsActive())
+        {
+           System.out.println("ValleyX: didstac " + sensorRangeFront.getDistance(DistanceUnit.INCH));
         }
 
 
-        System.out.println("ValleyX: ending");
+        // drive rest of way up to wall
+        encoderDrive(0.6, 8, 8, 5);
 
+
+        motorLeft.setPower(0.0);
+        motorRight.setPower(0.0);
+
+        encoderDrive(0.6, -4, -4, 3);
+
+        rotate(heading, 0.2);
+
+        //while (opModeIsActive());
+        System.out.println("ValleyX after rotate angle= " + getAngle());
+        System.out.println("ValleyX after rotate direction= " + checkDirection(rightAngle));
+
+        //resetAngle();
+        double straightPower = 0.6;
+        double adjustPower = 0.1;
+
+        double wallDistance = 4.0;
+        double wallDistanceThresh = 0.25;
+
+        //try
+        motorLeft.setPower(straightPower);
+        motorRight.setPower(straightPower);
+
+        while ((sensorRangeFront.getDistance(DistanceUnit.INCH) > 20.0) && opModeIsActive())
+        {
+            motorRight.setPower(straightPower-checkDirection(rightAngle));
+        }
+
+        motorLeft.setPower(0);
+        motorRight.setPower(0);
+
+        System.out.println("ValleyX: Go backwards");
+
+        // driving backwards
+        encoderDriveImu(rightAngle, 0.6, -65, 10, false);
+
+/*
+        motorLeft.setPower(-straightPower);
+        motorRight.setPower(-straightPower);
+
+        double BackSensorValue = sensorRangeBack.getDistance(DistanceUnit.INCH);
+
+        while ((BackSensorValue > 40.0) && opModeIsActive()) // change to rear sensor lator // changed :)
+        {
+            System.out.println("ValleyX: Back sensor value " + BackSensorValue);
+            motorRight.setPower(-straightPower-checkDirection(0));
+            BackSensorValue = sensorRangeBack.getDistance(DistanceUnit.INCH);
+        }
+
+        motorLeft.setPower(0);
+        motorRight.setPower(0);
+*/
+
+
+        //try
+/*
+         //double inches = 5.0;
+
+        motorLeft.setPower(straightPower);
+        motorRight.setPower(straightPower);
+
+        int counter2 =0;
+
+        while ((sensorRangeFront.getDistance(DistanceUnit.INCH) > 20.0) && opModeIsActive())
+        {
+            double Front = sensorRangeFront.getDistance(DistanceUnit.INCH);
+            double LeftSensor = sensorRangeLeft.getDistance(DistanceUnit.INCH);
+            //System.out.println("ValleyX: didstacFrony " + Front);
+            System.out.println("ValleyX: didstacLeft  " + LeftSensor);
+
+            if (LeftSensor > 10.0)
+                continue;
+
+            counter2++;
+            if (counter2 < 1)
+            {
+                continue;
+            }
+            counter2 = 0;
+
+            if (LeftSensor < (wallDistance - wallDistanceThresh))
+            {
+                //turn right
+                motorRight.setPower(straightPower+adjustPower);
+                System.out.println("ValleyX: turn right");
+            }
+            else if (LeftSensor > (wallDistance + wallDistanceThresh))
+            {
+                //turn left
+                motorRight.setPower(straightPower-adjustPower);
+                System.out.println("ValleyX: turn left");
+            }
+            else
+            {
+                System.out.println("ValleyX: straight");
+                motorRight.setPower(straightPower);
+            }
+
+        }
+
+        motorLeft.setPower(0.0);
+        motorRight.setPower(0.0);
+
+        // drop marker, write later
+
+        System.out.println("ValleyX: Go backwards");
+
+        motorLeft.setPower(-straightPower);
+        motorRight.setPower(-straightPower);
+
+        counter2 = 0;
+
+
+        while ((sensorRangeFront.getDistance(DistanceUnit.INCH) < 85.0) && opModeIsActive())
+        {
+            double Front = sensorRangeFront.getDistance(DistanceUnit.INCH);
+            double LeftSensor = sensorRangeLeft.getDistance(DistanceUnit.INCH);
+            //System.out.println("ValleyX: didstacFrony " + Front);
+            System.out.println("ValleyX: didstacLeft  " + LeftSensor);
+
+            if (LeftSensor > 10.0)
+                continue;
+
+            counter2++;
+            if (counter2 < 1)
+            {
+                continue;
+            }
+            counter2 = 0;
+
+            if (LeftSensor < (wallDistance - wallDistanceThresh))
+            {
+                //turn right
+                motorRight.setPower(-straightPower-adjustPower);
+                System.out.println("ValleyX: turn right");
+            }
+            else if (LeftSensor > (wallDistance + wallDistanceThresh))
+            {
+                //turn left
+                motorRight.setPower(-straightPower+adjustPower);
+                System.out.println("ValleyX: turn left");
+            }
+            else
+            {
+                System.out.println("ValleyX: straight");
+                motorRight.setPower(-straightPower);
+            }
+
+        }
+
+        motorLeft.setPower(0.0);
+        motorRight.setPower(0.0);
+*/
+        System.out.println("ValleyX: ending");
     }
     /**
      * Resets the cumulative angle tracking to zero.
      */
     private void resetAngle()
     {
-        lastAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-
-        globalAngle = 0;
+        lastAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES); // records what the last angle read is
+        resetMark = lastAngles;
+        globalAngle = 0; // direction you are pointing at rn (straight)
     }
 
     /**
@@ -341,9 +565,10 @@ public class AutonomousLegs2844 extends LinearOpMode
         // returned as 0 to +180 or 0 to -180 rolling back to -179 or +179 when rotation passes
         // 180 degrees. We detect this transition and track the total cumulative angle of rotation.
 
-        Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES); // same call as before, records local angle
 
         double deltaAngle = angles.firstAngle - lastAngles.firstAngle;
+        double deltaGlobalAngle = angles.firstAngle - resetMark.firstAngle;
 
         if (deltaAngle < -180)
             deltaAngle += 360;
@@ -354,6 +579,9 @@ public class AutonomousLegs2844 extends LinearOpMode
 
         lastAngles = angles;
 
+        System.out.println("ValleyX: globalAngle " + globalAngle);
+        System.out.println("ValleyX: resetMarkAngle " + deltaGlobalAngle);
+
         return globalAngle;
     }
 
@@ -361,7 +589,7 @@ public class AutonomousLegs2844 extends LinearOpMode
      * See if we are moving in a straight line and if not return a power correction value.
      * @return Power adjustment, + is adjust left - is adjust right.
      */
-    private double checkDirection()
+    private double checkDirection(double heading)
     {
         // The gain value determines how sensitive the correction is to direction changes.
         // You will have to experiment with your robot to get small smooth direction changes
@@ -370,12 +598,14 @@ public class AutonomousLegs2844 extends LinearOpMode
 
         angle = getAngle();
 
-        if (angle == 0)
+        if (angle == heading)
             correction = 0;             // no adjustment.
         else
-            correction = -angle;        // reverse sign of angle for correction.
+            correction = (-angle)+heading;        // reverse sign of angle for correction.
 
         correction = correction * gain;
+
+        System.out.println("ValleyX: heading= " + heading + " angle= " + angle + " correction= " + correction);
 
         return correction;
     }
@@ -421,15 +651,27 @@ public class AutonomousLegs2844 extends LinearOpMode
         else    // left turn.
             while (opModeIsActive() && getAngle() < degrees) {}
 
+        System.out.println("ValleyX in rotate before p=0 angle= " + getAngle());
+        System.out.println("ValleyX in rotate before p=0 direction= " + checkDirection(degrees));
+
+
         // turn the motors off.
         motorRight.setPower(0);
         motorRight.setPower(0);
 
+        System.out.println("ValleyX in rotate angle= " + getAngle());
+        System.out.println("ValleyX in rotate direction= " + checkDirection(degrees));
+
+
         // wait for rotation to stop.
         sleep(1000);
 
+        System.out.println("ValleyX in rotate after sleep angle= " + getAngle());
+        System.out.println("ValleyX in rotate after sleep direction= " + checkDirection(rightAngle));
+
+
         // reset angle tracking on new heading.
-        resetAngle();
+        //resetAngle();
     }
     /*
      *  Method to perform a relative move, based on encoder counts.
@@ -501,6 +743,90 @@ public class AutonomousLegs2844 extends LinearOpMode
             sleep(1);   // optional pause after each move
         }
     }
-}
 
+
+    /*
+     *  Method to perform a relative move, based on encoder counts.
+     *  Encoders are not reset as the move is based on the current position.
+     *  Move will stop if any of three conditions occur:
+     *  1) Move gets to the desired position
+     *  2) Move runs out of time
+     *  3) Driver stops the opmode running.
+     */
+    public void encoderDriveImu(int heading,
+                                double speed,
+                                double Inches,
+                                double timeoutS,
+                                boolean resetAngle)
+    {
+        int newLeftTarget;
+        int newRightTarget;
+
+        motorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        motorLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        motorRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+
+
+        if (resetAngle)
+        {
+            resetAngle();
+        }
+
+
+        // Ensure that the opmode is still active
+        if (opModeIsActive())
+        {
+
+            // Determine new target position, and pass to motor controller
+            newLeftTarget = motorLeft.getCurrentPosition() + (int)(Inches * COUNTS_PER_INCH);
+            newRightTarget = motorRight.getCurrentPosition() + (int)(Inches * COUNTS_PER_INCH);
+            motorLeft.setTargetPosition(newLeftTarget);
+            motorRight.setTargetPosition(newRightTarget);
+
+            // Turn On RUN_TO_POSITION
+            motorLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            motorRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            // reset the timeout time and start motion.
+            runtime.reset();
+            motorLeft.setPower(Math.abs(speed));
+            motorRight.setPower(Math.abs(speed));
+
+            // keep looping while we are still active, and there is time left, and both motors are running.
+            // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
+            // its target position, the motion will stop.  This is "safer" in the event that the robot will
+            // always end the motion as soon as possible.
+            // However, if you require that BOTH motors have finished their moves before the robot continues
+            // onto the next step, use (isBusy() || isBusy()) in the loop test.
+            while (opModeIsActive() &&
+                    (runtime.seconds() < timeoutS) &&
+                    (motorLeft.isBusy() && motorRight.isBusy()))
+            {
+
+
+                motorRight.setPower(Math.abs(speed) + checkDirection(heading));
+
+                // Display it for the driver.
+                telemetry.addData("Path1",  "Running to %7d :%7d", newLeftTarget,  newRightTarget);
+                telemetry.addData("Path2",  "Running at %7d :%7d",
+                        motorLeft.getCurrentPosition(),
+                        motorRight.getCurrentPosition());
+                telemetry.update();
+            }
+
+            // Stop all motion;
+            motorLeft.setPower(0);
+            motorRight.setPower(0);
+
+            // Turn off RUN_TO_POSITION
+            motorLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            motorRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            sleep(1);   // optional pause after each move
+        }
+    }
+}
 
