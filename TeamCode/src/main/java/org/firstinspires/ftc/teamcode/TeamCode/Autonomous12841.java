@@ -7,8 +7,8 @@ import com.disnodeteam.dogecv.detectors.roverrukus.GoldDetector;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -32,10 +32,10 @@ public class Autonomous12841 extends LinearOpMode {
     private DcMotor motorRight;
     private DcMotor motorlift;
 
-    private DigitalChannel digitalTouch;
-
     private Servo slide;
     private Servo hook;
+
+    AnalogInput potentiometer;
 
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -54,9 +54,12 @@ public class Autonomous12841 extends LinearOpMode {
         motorRight = hardwareMap.dcMotor.get("Rmotor");
         motorlift = hardwareMap.dcMotor.get("Liftmotor");
 
+        potentiometer = hardwareMap.analogInput.get("motorliftpot");
+
         slide = hardwareMap.servo.get("hangingservo");
         hook = hardwareMap.servo.get("hangingclaw");
 
+        //motorRight.setDirection(DcMotor.Direction.REVERSE);
         motorLeft.setDirection(DcMotor.Direction.REVERSE);
 
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -73,6 +76,19 @@ public class Autonomous12841 extends LinearOpMode {
 
         imu.initialize(parameters);
 
+        telemetry.addData("Mode", "calibrating...");
+        telemetry.update();
+
+        // make sure the imu gyro is calibrated before continuing.
+        while (!isStopRequested() && !imu.isGyroCalibrated())
+        {
+            sleep(50);
+            idle();
+        }
+
+        telemetry.addData("imu calib status", imu.getCalibrationStatus().toString());
+        telemetry.update();
+
         detector = new GoldAlignDetector();
 
         detector.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
@@ -82,12 +98,13 @@ public class Autonomous12841 extends LinearOpMode {
 
         // Optional Tuning
 
-        detector.alignSize = 100; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
+        detector.alignSize = 150; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
 
-        detector.alignPosOffset = 0; // How far from center frame to offset this alignment zone.
+        detector.alignPosOffset = -220; // How far from center frame to offset this alignment zone. 6inches off center, 22 inches from cube in center.
 
         detector.downscale = 0.4; // How much to downscale the input frames
 
+        detector.SetRequestedYLine(320); //enhancement to doge detector to only consider scoring
 
         detector.areaScoringMethod = DogeCV.AreaScoringMethod.PERFECT_AREA; // Can also be PERFECT_AREA
 
@@ -98,14 +115,17 @@ public class Autonomous12841 extends LinearOpMode {
         detector.ratioScorer.perfectRatio = 1.0;
         detector.enable();
 
-        System.out.println("ValleyX:  Waiting for Start");
+        System.out.println("Plus3:  Waiting for Start");
         waitForStart();
 
-        System.out.println("ValleyX:  Starting ... ");
+        System.out.println("Plus3:  Starting ... ");
 
-
-        /*
-        while (opModeIsActive())
+/*
+        encoderDrive(.5, 12,12,5);
+        rotate(90, .3);
+        while (opModeIsActive());
+*/
+        /*while (opModeIsActive())
         {
             telemetry.addData("IsAligned", detector.getAligned()); // Is the bot aligned with the gold mineral
             telemetry.addData("X Pos", detector.getXPosition()); // Gold X pos in the view 270 - 370 is aligned
@@ -115,65 +135,56 @@ public class Autonomous12841 extends LinearOpMode {
         */
 
 
+
+
         while (opModeIsActive()) {
 
-            hook.setPosition(.5);
-            sleep(2000);
-            slide.setPosition(0);
-            motorlift.setPower(-.25);
+            hook.setPosition(.0);
 
-            /*
-            if (detector.isFound() == true){
-                //allignment section
-                //moves block if it is in allignment
-                if ((detector.getXPosition() > 240) && (detector.getXPosition() < 280)){
-                    encoderDrive(.3, 12, 12, 5);
-                }
-                //rotates left to allignment
-                else if (detector.getXPosition() < 240){
-                    encoderDrive(.3, -3, 3, 5);
-                }
-                //rotates right to allignment
-                else
-                    encoderDrive(.3, 3, -3, 5);
+            // TODO: Get voltage value for proper position and determine best motorlift power needed to get there safely
+            // Keep applying power to motorlift until fully extended then stop
+            while (potentiometer.getVoltage() < 1.11) {
+                motorlift.setPower(0.6);
+            }
+            motorlift.setPower(0);
 
-                System.out.println("ValleyX: Gold Found");
+            //Todo: Try positive power to lower the motor lift all the way
+            sleep(2000);// Gravity for 2 seconds
+            //motorlift.setPower(0.05);  // Set the Power to positve power to lower it all the way
+            //sleep(500); // Sleep one second (Try Ranges from 250 to 1000
+            slide.setPosition(0); // Slide open the upper Servo
+            motorlift.setPower(-.40);  // Lower the lift all the way
+
+            if (detector.isFound() && detector.getAligned()){
+                encoderDrive(1, 25, 25, 5);
+                System.out.println("Plus3: Alligned Straight");
             }
-            else {
-                rotate (20, .2);
-                System.out.println("ValleyX: Turning Left");
+            else{
+                System.out.println("Plus3: Rotating Right");
+                rotate(20, .3);
+                if (detector.isFound()){
+                    System.out.println("Plus3: Found Gold");
+                    if (detector.getAligned()){
+                        encoderDrive(1, 25, 25, 5);
+                        System.out.println("Plus3: Alligned Right");
+                    }
+                }
+                else{
+                    System.out.println("Plus3: Rotating Left");
+                    rotate(-40, .3);
+                    encoderDrive(1, 25, 25, 5);
+                    System.out.println("Plus3: Alligned Left");
+                }
             }
-            */
+            break;
         }
 
 
-        System.out.println("ValleyX: ending");
+        System.out.println("Plus3: ending");
         detector.disable();
 
 
 
-        encoderDrive( 0.7, 12,  12,  5);  //move both wheels 12 inches at 70% speed
-
-        //start motors
-        motorLeft.setPower(0.6);
-        motorRight.setPower(0.6);
-
-        //display digital touch state to phone
-        if (digitalTouch.getState() == true)
-        {
-            telemetry.addData( "Digital Touch",  "Is Not Pressed");
-        }
-        else
-        {
-            telemetry.addData( "Digital Touch",  "Is Pressed");
-        }
-
-        int counter = 0;
-        while (counter < 5)
-        {
-            System.out.printf("Counter %d\n", counter);
-            counter = counter + 1;
-        }
     }
     /*
      *  Method to perfmorm a relative move, based on encoder counts.
@@ -186,6 +197,8 @@ public class Autonomous12841 extends LinearOpMode {
     public void encoderDrive(double speed,
                              double leftInches, double rightInches,
                              double timeoutS) {
+       leftInches = -leftInches;
+       rightInches = -rightInches;
         int newLeftTarget;
         int newRightTarget;
 
@@ -236,117 +249,116 @@ public class Autonomous12841 extends LinearOpMode {
             sleep(1);   // optional pause after each move
         }
     }
-        /**
-         * Resets the cumulative angle tracking to zero.
-         */
-        private void resetAngle()
-        {
-            lastAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+    /**
+     * Resets the cumulative angle tracking to zero.
+     */
+    private void resetAngle()
+    {
+        lastAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
-            globalAngle = 0;
-        }
-
-        /**
-         * Get current cumulative angle rotation from last reset.
-         * @return Angle in degrees. + = left, - = right.
-         */
-        private double getAngle()
-        {
-            // We experimentally determined the Z axis is the axis we want to use for heading angle.
-            // We have to process the angle because the imu works in euler angles so the Z axis is
-            // returned as 0 to +180 or 0 to -180 rolling back to -179 or +179 when rotation passes
-            // 180 degrees. We detect this transition and track the total cumulative angle of rotation.
-
-            Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-
-            double deltaAngle = angles.firstAngle - lastAngles.firstAngle;
-
-            if (deltaAngle < -180)
-                deltaAngle += 360;
-            else if (deltaAngle > 180)
-                deltaAngle -= 360;
-
-            globalAngle += deltaAngle;
-
-            lastAngles = angles;
-
-            return globalAngle;
-        }
-
-        /**
-         * See if we are moving in a straight line and if not return a power correction value.
-         * @return Power adjustment, + is adjust left - is adjust right.
-         */
-        private double checkDirection()
-        {
-            // The gain value determines how sensitive the correction is to direction changes.
-            // You will have to experiment with your robot to get small smooth direction changes
-            // to stay on a straight line.
-            double correction, angle, gain = .10;
-
-            angle = getAngle();
-
-            if (angle == 0)
-                correction = 0;             // no adjustment.
-            else
-                correction = -angle;        // reverse sign of angle for correction.
-
-            correction = correction * gain;
-
-            return correction;
-        }
-
-        /**
-         * Rotate left or right the number of degrees. Does not support turning more than 180 degrees.
-         * @param degrees Degrees to turn, + is left - is right
-         */
-        private void rotate(int degrees, double power)
-        {
-            double  leftPower, rightPower;
-
-            // restart imu movement tracking.
-            resetAngle();
-
-            // getAngle() returns + when rotating counter clockwise (left) and - when rotating
-            // clockwise (right).
-
-            if (degrees < 0)
-            {   // turn right.
-                leftPower = -power;
-                rightPower = power;
-            }
-            else if (degrees > 0)
-            {   // turn left.
-                leftPower = power;
-                rightPower = -power;
-            }
-            else return;
-
-            // set power to rotate.
-            motorLeft.setPower(leftPower);
-            motorRight.setPower(rightPower);
-
-            // rotate until turn is completed.
-            if (degrees < 0)
-            {
-                // On right turn we have to get off zero first.
-                while (opModeIsActive() && getAngle() == 0) {}
-
-                while (opModeIsActive() && getAngle() > degrees) {}
-            }
-            else    // left turn.
-                while (opModeIsActive() && getAngle() < degrees) {}
-
-            // turn the motors off.
-            motorRight.setPower(0);
-            motorLeft.setPower(0);
-
-            // wait for rotation to stop.
-            sleep(1000);
-
-            // reset angle tracking on new heading.
-            resetAngle();
-        }
+        globalAngle = 0;
     }
 
+    /**
+     * Get current cumulative angle rotation from last reset.
+     * @return Angle in degrees. + = left, - = right.
+     */
+    private double getAngle()
+    {
+        // We experimentally determined the Z axis is the axis we want to use for heading angle.
+        // We have to process the angle because the imu works in euler angles so the Z axis is
+        // returned as 0 to +180 or 0 to -180 rolling back to -179 or +179 when rotation passes
+        // 180 degrees. We detect this transition and track the total cumulative angle of rotation.
 
+        Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+
+        double deltaAngle = angles.firstAngle - lastAngles.firstAngle;
+
+        if (deltaAngle < -180)
+            deltaAngle += 360;
+        else if (deltaAngle > 180)
+            deltaAngle -= 360;
+
+        globalAngle += deltaAngle;
+
+        lastAngles = angles;
+
+        return globalAngle;
+    }
+
+    /**
+     * See if we are moving in a straight line and if not return a power correction value.
+     * @return Power adjustment, + is adjust left - is adjust right.
+     */
+    private double checkDirection()
+    {
+        // The gain value determines how sensitive the correction is to direction changes.
+        // You will have to experiment with your robot to get small smooth direction changes
+        // to stay on a straight line.
+        double correction, angle, gain = .10;
+
+        angle = getAngle();
+
+        if (angle == 0)
+            correction = 0;             // no adjustment.
+        else
+            correction = -angle;        // reverse sign of angle for correction.
+
+        correction = correction * gain;
+
+        return correction;
+    }
+
+    /**
+     * Rotate left or right the number of degrees. Does not support turning more than 180 degrees.
+     * @param degrees Degrees to turn, + is left - is right
+     */
+    private void rotate(int degrees, double power)
+    {
+        double  leftPower, rightPower;
+        degrees = -degrees;
+
+        // restart imu movement tracking.
+        resetAngle();
+
+        // getAngle() returns + when rotating counter clockwise (left) and - when rotating
+        // clockwise (right).
+
+        if (degrees < 0)
+        {   // turn right.
+            leftPower = -power;
+            rightPower = power;
+        }
+        else if (degrees > 0)
+        {   // turn left.
+            leftPower = power;
+            rightPower = -power;
+        }
+        else return;
+
+        // set power to rotate.
+        motorLeft.setPower(leftPower);
+        motorRight.setPower(rightPower);
+
+        // rotate until turn is completed.
+        if (degrees < 0)
+        {
+            // On right turn we have to get off zero first.
+            while (opModeIsActive() && getAngle() == 0) {}
+
+            while (opModeIsActive() && getAngle() > degrees) {}
+        }
+        else    // left turn.
+            while (opModeIsActive() && getAngle() < degrees) {}
+
+        // turn the motors off.
+        motorRight.setPower(0);
+        motorLeft.setPower(0);
+
+        // wait for rotation to stop.
+        sleep(1000);
+
+        // reset angle tracking on new heading.
+        resetAngle();
+    }
+}
