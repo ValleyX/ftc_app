@@ -17,8 +17,6 @@ public class TeleOp2844 extends LinearOpMode
     private DcMotor bottomLift;
     private DcMotor topLift;
 
-
-
     private DcMotor intake;
 
     private DigitalChannel digitalTouch;
@@ -34,15 +32,12 @@ public class TeleOp2844 extends LinearOpMode
     @Override
     public void runOpMode() throws InterruptedException
     {
-
         System.out.println("ValleyX runOpMode");
 
         motorLeft = hardwareMap.dcMotor.get("lmotor"); // main 1 motor
         motorRight = hardwareMap.dcMotor.get("rmotor"); // main 0 motor
         bottomLift = hardwareMap.dcMotor.get("blift"); // main 2 motor
         topLift = hardwareMap.dcMotor.get("tlift"); // main 3 motor
-
-
 
         intake = hardwareMap.dcMotor.get("intake"); // secondary 0 motor --> fix in wiring
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -64,6 +59,7 @@ public class TeleOp2844 extends LinearOpMode
         double gamepad2RightStickY;
         double gamepad1LeftTrigger;
 
+        System.out.println("ValleyX waiting for start");
         waitForStart();
 
         System.out.println("ValleyX started");
@@ -200,7 +196,7 @@ public class TeleOp2844 extends LinearOpMode
                 }
                 bottomLift.setPower(0.0);
 */
-                idle();
+                //idle();
             }
 
             if (gamepad2.right_bumper == true) // motor for intake --> in
@@ -227,6 +223,7 @@ public class TeleOp2844 extends LinearOpMode
             telemetry.addData("trigger values", gamepad1LeftTrigger);
             telemetry.addData("touch", digitalTouch.getState());
             telemetry.update();
+            idle();
         } // while opmode is active
     } // run op mode
 
@@ -236,17 +233,28 @@ public class TeleOp2844 extends LinearOpMode
         runtime.reset();
         if (pot.getVoltage() < position)
         {
-            while ((pot.getVoltage() < position) && (runtime.seconds() < timeoutS))
+            lift.setPower(power);
+            while ((pot.getVoltage() < position) && (runtime.seconds() < timeoutS) && opModeIsActive())
             {
-                lift.setPower(power);
+                // gamepad1
+                motorLeft.setPower(-gamepad1.right_stick_y);
+                motorRight.setPower(-gamepad1.left_stick_y);
+
+                idle();
             }
             lift.setPower(0.0);
+
         }
         else
         {
-            while ((pot.getVoltage() > position) && (runtime.seconds() < timeoutS))
+            lift.setPower(-power);
+            while ((pot.getVoltage() > position) && (runtime.seconds() < timeoutS) && opModeIsActive())
             {
-                lift.setPower(-power);
+                // gamepad1
+                motorLeft.setPower(-gamepad1.right_stick_y);
+                motorRight.setPower(-gamepad1.left_stick_y);
+
+                idle();
             }
             lift.setPower(0.0);
         }
