@@ -26,7 +26,7 @@ public class TeleOp2844 extends LinearOpMode
 
     private Servo hangingServo;
 
-    double topMax = 1.83;
+    double topMax = 1.946;
     private ElapsedTime runtime = new ElapsedTime();
 
     @Override
@@ -97,7 +97,7 @@ public class TeleOp2844 extends LinearOpMode
                 motorRight.setPower(0.0);
 
                 // close top
-                while (topPot.getVoltage() > 0)
+                while (topPot.getVoltage() > 0.35)
                 {
                     topLift.setPower(-0.6);
                 }
@@ -126,7 +126,7 @@ public class TeleOp2844 extends LinearOpMode
                 motorRight.setPower(0.0);
 
                 // closing top
-                while (topPot.getVoltage() > 0)
+                while (topPot.getVoltage() > 0.35)
                 {
                     topLift.setPower(-0.6);
                 }
@@ -240,6 +240,7 @@ public class TeleOp2844 extends LinearOpMode
                 motorLeft.setPower(-gamepad1.right_stick_y);
                 motorRight.setPower(-gamepad1.left_stick_y);
 
+                checkForIntake();
                 idle();
             }
             lift.setPower(0.0);
@@ -253,10 +254,25 @@ public class TeleOp2844 extends LinearOpMode
                 // gamepad1
                 motorLeft.setPower(-gamepad1.right_stick_y);
                 motorRight.setPower(-gamepad1.left_stick_y);
+                checkForIntake();
 
                 idle();
             }
             lift.setPower(0.0);
         }
     }
+
+    private void checkForIntake()
+    {
+        if (gamepad2.right_bumper == true) // motor for intake --> in
+        {
+            intake.setPower(-10.0); // as long as the bumper is held down
+        } else if (gamepad2.left_bumper == true) // motor for intake --> out
+        {
+            intake.setPower(10.0); // as long as the bumper is held down
+        } else {
+            intake.setPower(0.0);
+        }
+    }
+
 } // class
