@@ -62,21 +62,23 @@ public class AutonomousLegs2844 extends LinearOpMode
     FoundRotationLocation foundRot = FoundRotationLocation.STRAIGHT; // default to straight
 
     // initial aligned x and y dimentions
-    int goldDetectorLeftX = 260;
-    int goldDetectorRightX = 320;
+    //int goldDetectorLeftX = 260;
+    //int goldDetectorRightX = 320;
 
     // final aligned x and y dementions --> moved over because of phone position
-    static final int goldIsFoundLeftX = 70;
-    static final int goldIsFoundRightX = 530;
+    //static final int goldIsFoundLeftX = 70;
+    //static final int goldIsFoundRightX = 530;
 
     // depot start
-    //int rightAngle = -90;
-    //int heading = -65;
+    int rightAngle = -90;
+    int heading = -65;
     // crater start
-    int rightAngle = 90;
-    int heading = 65;
+    //int rightAngle = 90;
+    //int heading = 65;
 
-    int driveExtra = 7;
+    int driveExtra = 0;
+    // depot = 0
+    // crater = 7
 
     //converts degrees to inches for the given bot
     public double degToInches (double degrees)
@@ -228,7 +230,7 @@ public class AutonomousLegs2844 extends LinearOpMode
         telemetry.update();
 
 
-        encoderDrive(0.3, 4, 4, 1);
+        //encoderDrive(0.3, 4, 4, 1);
         int counter = 0; // 0=straight, 1=right, 2=left
 
         String foundString = "not found"; //default
@@ -243,7 +245,7 @@ public class AutonomousLegs2844 extends LinearOpMode
             telemetry.update();
         }
 */
-
+/*
         while (opModeIsActive())
         {
             //refine isfound to be less than what doge detector says
@@ -326,10 +328,13 @@ public class AutonomousLegs2844 extends LinearOpMode
                 else //found but not aligned
                 {
                     System.out.println("ValleyX cube found but not aligned x=" + detector.getXPosition());
-                    if (detector.getXPosition() < goldDetectorLeftX) {
+                    if (detector.getXPosition() < goldDetectorLeftX)
+                    {
                         System.out.println("ValleyX turning right to align cube x=" + detector.getXPosition());
                         encoderDrive(0.2, 1, -1, 1);
-                    } else {
+                    }
+                    else
+                    {
                         System.out.println("ValleyX turning left to align cube x=" + detector.getXPosition());
                         encoderDrive(0.2, -1, 1, 1);
                     }
@@ -344,11 +349,54 @@ public class AutonomousLegs2844 extends LinearOpMode
 
         System.out.println("ValleyX Gold Detector out of break");
         //encoderDrive(0.6, -25, -25, 6);
+*/
+
+// new gold detecting code
+
+        //while (opModeIsActive())
+        //{
+            encoderDrive(0.3, -4, -4, 3);
+            int middleValue = 300;
+            System.out.println("ValleyX: gold is found");
+            if (detector.isFound() == true)
+            {
+                if (detector.getXPosition() > middleValue)
+                {
+                    foundRot = FoundRotationLocation.RIGHT;
+                    System.out.println("ValleyX: gold is found right");
+                    System.out.println("ValleyX: found right value " + detector.getXPosition());
+                    rotate(-1, 0.3);
+                    encoderDrive(0.6, 40, 40, 5);
+                }
+                else
+                {
+                    foundRot = FoundRotationLocation.STRAIGHT;
+                    System.out.println("ValleyX: gold is found middle");
+                    System.out.println("ValleyX: found middle value " + detector.getXPosition());
+                    encoderDrive(0.6, 35, 35, 5);
+                }
+            }
+            else
+            {
+                foundRot = FoundRotationLocation.LEFT;
+                System.out.println("ValleyX: gold is found left");
+                System.out.println("ValleyX: found left value " + detector.getXPosition());
+                rotate(1, 0.3);
+                encoderDrive(0.6, 35, 35, 5);
+            }
+        //}
+
+        detector.disable();
+
+        // initial steps for next part of autonomous after gold detection --> not working for this event
+
+        System.out.println("ValleyX Gold Detector done");
+        //encoderDrive(0.6, -25, -25, 6);
 
         if (foundRot == FoundRotationLocation.LEFT)
         {
             System.out.println("ValleyX found left");
-            encoderDrive(1, 22, 22, 5);
+            //encoderDrive(1, 22, 22, 5);
             encoderDrive(0.6, -17, -17, 5);
             rotate(45, 0.2);
             encoderDrive(0.6, 15+driveExtra, 15+driveExtra, 6);
@@ -358,7 +406,7 @@ public class AutonomousLegs2844 extends LinearOpMode
         if (foundRot == FoundRotationLocation.STRAIGHT)
         {
             System.out.println("ValleyX found straight");
-            encoderDrive(1, 20, 20, 5);
+            //encoderDrive(1, 20, 20, 5);
             encoderDrive(0.6, -17, -17, 5);
             rotate(70, 0.2);
             encoderDrive(0.6, 22+driveExtra, 22+driveExtra, 6);
@@ -368,7 +416,7 @@ public class AutonomousLegs2844 extends LinearOpMode
         if (foundRot == FoundRotationLocation.RIGHT)
         {
             System.out.println("ValleyX found right");
-            encoderDrive(1, 24, 24, 5);
+            //encoderDrive(1, 24, 24, 5);
             encoderDrive(0.6, -17, -17, 5);
             rotate(95, 0.2);
             encoderDrive(0.6, 27+driveExtra, 27+driveExtra, 6);
@@ -393,9 +441,15 @@ public class AutonomousLegs2844 extends LinearOpMode
         motorLeft.setPower(0.0);
         motorRight.setPower(0.0);
 
+        System.out.println("ValleyX about to back up from wall");
+
         encoderDrive(0.6, -4, -4, 3);
 
+        System.out.println("ValleyX backed up, about to turn right bc im a good legs");
+
         rotate(heading, 0.2);
+
+        System.out.println("ValleyX turned right like the perfect child i am");
 
         //while (opModeIsActive());
         System.out.println("ValleyX after rotate angle= " + getAngle());
