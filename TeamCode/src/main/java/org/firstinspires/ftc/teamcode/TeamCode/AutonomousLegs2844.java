@@ -79,6 +79,7 @@ public class AutonomousLegs2844 extends LinearOpMode
     int driveExtra = 0;
     // depot = 0
     // crater = 7
+    int rotateDelay = 100;
 
     //converts degrees to inches for the given bot
     public double degToInches (double degrees)
@@ -357,6 +358,7 @@ public class AutonomousLegs2844 extends LinearOpMode
         //{
             encoderDrive(0.3, -4, -4, 3);
             int middleValue = 300;
+            double speed = 1.0;
             System.out.println("ValleyX: gold is found");
             if (detector.isFound() == true)
             {
@@ -365,15 +367,15 @@ public class AutonomousLegs2844 extends LinearOpMode
                     foundRot = FoundRotationLocation.RIGHT;
                     System.out.println("ValleyX: gold is found right");
                     System.out.println("ValleyX: found right value " + detector.getXPosition());
-                    rotate(-1, 0.3);
-                    encoderDrive(0.6, 40, 40, 5);
+                    rotate(-15, 0.3, rotateDelay); //////////////////////kjvbvfibvbgaeuighau///
+                    encoderDrive(speed, 40, 40, 5); /////////////////////////////////////////////
                 }
                 else
                 {
                     foundRot = FoundRotationLocation.STRAIGHT;
                     System.out.println("ValleyX: gold is found middle");
                     System.out.println("ValleyX: found middle value " + detector.getXPosition());
-                    encoderDrive(0.6, 35, 35, 5);
+                    encoderDrive(speed, 35, 35, 5); /////////////////////////////////////////////
                 }
             }
             else
@@ -381,8 +383,8 @@ public class AutonomousLegs2844 extends LinearOpMode
                 foundRot = FoundRotationLocation.LEFT;
                 System.out.println("ValleyX: gold is found left");
                 System.out.println("ValleyX: found left value " + detector.getXPosition());
-                rotate(1, 0.3);
-                encoderDrive(0.6, 35, 35, 5);
+                rotate(15, 0.3, rotateDelay);
+                encoderDrive(speed, 35, 35, 5); /////////////////////////////////////////////////////////
             }
         //}
 
@@ -397,57 +399,60 @@ public class AutonomousLegs2844 extends LinearOpMode
         {
             System.out.println("ValleyX found left");
             //encoderDrive(1, 22, 22, 5);
-            encoderDrive(0.6, -17, -17, 5);
-            rotate(45, 0.2);
-            encoderDrive(0.6, 15+driveExtra, 15+driveExtra, 6);
-            rotate(-30, 0.2);
+            encoderDrive(speed, -17, -17, 5); /////////////////////////////////////////////////
+            rotate(45, 0.2, rotateDelay);
+            encoderDrive(speed, 15+driveExtra, 15+driveExtra, 6);//////////////////////////////////////////
+            rotate(-30, 0.2, rotateDelay);
         }
 
         if (foundRot == FoundRotationLocation.STRAIGHT)
         {
             System.out.println("ValleyX found straight");
             //encoderDrive(1, 20, 20, 5);
-            encoderDrive(0.6, -17, -17, 5);
-            rotate(70, 0.2);
-            encoderDrive(0.6, 22+driveExtra, 22+driveExtra, 6);
-            rotate(-30, 0.2);
+            encoderDrive(speed, -17, -17, 5);///////////////////////////////////////////////
+            rotate(70, 0.2, rotateDelay);
+            encoderDrive(speed, 22+driveExtra, 22+driveExtra, 6);////////////////////////////////////////
+            rotate(-30, 0.2, rotateDelay);
         }
 
         if (foundRot == FoundRotationLocation.RIGHT)
         {
             System.out.println("ValleyX found right");
             //encoderDrive(1, 24, 24, 5);
-            encoderDrive(0.6, -17, -17, 5);
-            rotate(95, 0.2);
-            encoderDrive(0.6, 27+driveExtra, 27+driveExtra, 6);
-            rotate(-30, 0.2);
+            encoderDrive(speed, -25, -25, 5);////////////////////////////////////////////
+            rotate(100, 0.2, rotateDelay);
+            encoderDrive(speed, 30+driveExtra, 30+driveExtra, 6);/////////////////////////////////////
+            rotate(-30, 0.2, rotateDelay);
         }
 
         // drive up to wall
-        motorLeft.setPower(0.6);
-        motorRight.setPower(0.6);
+        motorLeft.setPower(speed);
+        motorRight.setPower(speed);
 
         // drive 4 innches from the wall
         while ((sensorRangeFront.getDistance(DistanceUnit.INCH) > 4.0) && opModeIsActive())
         {
            System.out.println("ValleyX: didstac " + sensorRangeFront.getDistance(DistanceUnit.INCH));
+           idle();
         }
 
 
         // drive rest of way up to wall
-        encoderDrive(0.6, 8, 8, 5);
+        encoderDrive(speed, 8, 8, 5); ///////////////////////////////////////////////////////
 
+       // sleep(1000);
 
+        //resetAngle();
         motorLeft.setPower(0.0);
         motorRight.setPower(0.0);
 
         System.out.println("ValleyX about to back up from wall");
 
-        encoderDrive(0.6, -4, -4, 3);
+        encoderDrive(speed, -4, -4, 3); /////////////////////////////////////////
 
         System.out.println("ValleyX backed up, about to turn right bc im a good legs");
 
-        rotate(heading, 0.2);
+        rotate(heading, 0.2, 1000);
 
         System.out.println("ValleyX turned right like the perfect child i am");
 
@@ -456,7 +461,7 @@ public class AutonomousLegs2844 extends LinearOpMode
         System.out.println("ValleyX after rotate direction= " + checkDirection(rightAngle));
 
         //resetAngle();
-        double straightPower = 0.6;
+        double straightPower = speed; ///////////////////////////////////////////////////////
         double adjustPower = 0.1;
 
         double wallDistance = 4.0;
@@ -477,7 +482,7 @@ public class AutonomousLegs2844 extends LinearOpMode
         System.out.println("ValleyX: Go backwards");
 
         // driving backwards
-        encoderDriveImu(rightAngle, 0.6, -65, 10, false);
+        encoderDriveImu(rightAngle, speed, -65, 10, false); //////////////////////////////////////
 
 /*
         motorLeft.setPower(-straightPower);
@@ -668,7 +673,7 @@ public class AutonomousLegs2844 extends LinearOpMode
      * Rotate left or right the number of degrees. Does not support turning more than 180 degrees.
      * @param degrees Degrees to turn, + is left - is right
      */
-    private void rotate(int degrees, double power)
+    private void rotate(int degrees, double power, int delay)
     {
         double  leftPower, rightPower;
 
@@ -718,7 +723,9 @@ public class AutonomousLegs2844 extends LinearOpMode
 
 
         // wait for rotation to stop.
-        sleep(1000);
+        sleep(delay);
+        //sleep(2);
+
 
         System.out.println("ValleyX in rotate after sleep angle= " + getAngle());
         System.out.println("ValleyX in rotate after sleep direction= " + checkDirection(rightAngle));
@@ -784,6 +791,7 @@ public class AutonomousLegs2844 extends LinearOpMode
                         motorLeft.getCurrentPosition(),
                         motorRight.getCurrentPosition());
                 telemetry.update();
+                idle();
             }
 
             // Stop all motion;
