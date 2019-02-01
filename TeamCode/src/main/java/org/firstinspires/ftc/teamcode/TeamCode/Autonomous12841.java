@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -24,9 +25,9 @@ public class Autonomous12841 extends LinearOpMode {
     Orientation             lastAngles = new Orientation();
     double globalAngle, power = .30, correction;
 
-
-
     private GoldAlignDetector detector;
+
+    private TouchSensor armfailsafe;
 
     private DcMotor motorLeft;
     private DcMotor motorRight;
@@ -34,6 +35,8 @@ public class Autonomous12841 extends LinearOpMode {
 
     private Servo slide;
     private Servo hook;
+    private Servo bucketBack;
+    private Servo bucketTop;
 
     AnalogInput potentiometer;
 
@@ -45,6 +48,20 @@ public class Autonomous12841 extends LinearOpMode {
     static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * 3.1415);
 
+    static final double SLIDE_OPEN = 0.17;  //Servo 4
+    static final double SLIDE_CLOSE = 0.42; //Servo 4
+
+    static final double HOOK_OPEN = .9;  //Hook Servo 3
+    static final double HOOK_CLOSE = 1;  //Hook Servo 3
+
+    static final double BUCKET_BACK_OPEN = .45;  // Servo 2
+    static final double BUCKET_BACK_CLOSE = .95; // Servo 2
+
+    static final double BUCKET_TOP_OPEN = .54; // Servo 1
+    static final double BUCKET_TOP_CLOSE = 1.0;  //Servo 1
+
+
+    static final double POTENTIOMETER_VERTICAL = 1.47;
 
 
     @Override
@@ -58,6 +75,10 @@ public class Autonomous12841 extends LinearOpMode {
 
         slide = hardwareMap.servo.get("hangingservo");
         hook = hardwareMap.servo.get("hangingclaw");
+        bucketBack = hardwareMap.servo.get("bucketBack");
+        bucketTop = hardwareMap.servo.get("bucketTop");
+
+        armfailsafe = hardwareMap.touchSensor.get("armfailsafe");
 
         //motorRight.setDirection(DcMotor.Direction.REVERSE);
         motorLeft.setDirection(DcMotor.Direction.REVERSE);
@@ -100,7 +121,7 @@ public class Autonomous12841 extends LinearOpMode {
 
         detector.alignSize = 150; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
 
-        detector.alignPosOffset = -220; // How far from center frame to offset this alignment zone. 6inches off center, 22 inches from cube in center.
+        detector.alignPosOffset = -180; // How far from center frame to offset this alignment zone. 6inches off center, 22 inches from cube in center.
 
         detector.downscale = 0.4; // How much to downscale the input frames
 
@@ -115,11 +136,22 @@ public class Autonomous12841 extends LinearOpMode {
         detector.ratioScorer.perfectRatio = 1.0;
         detector.enable();
 
+        //SET UP DOORS.
+
+        bucketBack.setPosition(BUCKET_BACK_CLOSE);
+        bucketTop.setPosition(BUCKET_TOP_CLOSE);
+
+
+
+
+        telemetry.addData("status:","Waiting for Start...");
+        telemetry.update();
         System.out.println("Plus3:  Waiting for Start");
         waitForStart();
 
         System.out.println("Plus3:  Starting ... ");
-
+        telemetry.addData("status:","Started...");
+        telemetry.update();
 /*
         encoderDrive(.5, 12,12,5);
         rotate(90, .3);
@@ -136,44 +168,106 @@ public class Autonomous12841 extends LinearOpMode {
 
 
 
+        System.out.println("Plus3: Voltage="+potentiometer.getVoltage());
+    System.out.println("Plus3: BEFORE SlidePos="+slide.getPosition());
+        //slide.setPosition(SLIDE_OPEN);  //SET TO OPEN POSITION
+        telemetry.addData("status:","Sliding...");
+        telemetry.update();
+    System.out.println("Plus3: AFTER SlidePos="+slide.getPosition());
 
         while (opModeIsActive()) {
 
-            hook.setPosition(.0);
+
+            //if (true)break;//1.172 2.286
+            //motorlift.setPower(-.1);
+
+            System.out.println("Plus3: isPressed="+armfailsafe.isPressed());
+
+            if (!armfailsafe.isPressed()){
+                motorlift.setPower(-.8);
+                //motorRight.setPower(0);
+                //motorLeft.setPower(0);
+            }
+            while (!armfailsafe.isPressed()) {
+                System.out.println("Plus3: isPressed="+armfailsafe.isPressed());
+                hook.setPosition(HOOK_OPEN);
+                sleep(50);
+            }
+            sleep(250);
+            System.out.println("Plus3: Voltage="+potentiometer.getVoltage());
+
 
             // TODO: Get voltage value for proper position and determine best motorlift power needed to get there safely
             // Keep applying power to motorlift until fully extended then stop
-            while (potentiometer.getVoltage() < 1.11) {
-                motorlift.setPower(0.6);
+            while (potentiometer.getVoltage() < POTENTIOMETER_VERTICAL ) {// Wait until
+                motorlift.setPower(0.70);
+                System.out.println("Plus3: Voltage="+potentiometer.getVoltage());
+                sleep(50);
             }
             motorlift.setPower(0);
-
+            slide.setPosition(SLIDE_OPEN);
+            sleep(250); // Wait 1/4 of a second
+            encoderDrive(.1, -1, -1, 1);
+            motorlift.setPower(-.3);
             //Todo: Try positive power to lower the motor lift all the way
-            sleep(2000);// Gravity for 2 seconds
+            //sleep(2000);// Gravity for 2 seconds
             //motorlift.setPower(0.05);  // Set the Power to positve power to lower it all the way
             //sleep(500); // Sleep one second (Try Ranges from 250 to 1000
-            slide.setPosition(0); // Slide open the upper Servo
-            motorlift.setPower(-.40);  // Lower the lift all the way
-
+            //slide.setPosition(SLIDE_OPEN); // Slide open the upper Servo
+            //motorlift.setPower(.40);  // Lower the lift all the way
+            sleep(2000);
             if (detector.isFound() && detector.getAligned()){
                 encoderDrive(1, 25, 25, 5);
                 System.out.println("Plus3: Alligned Straight");
+                sleep(100);
+                encoderDrive(1, 14, 14, 5);
+                System.out.println("Plus3: Continuing to Depot");
+                //encoderDrive(5,30,5); //place holder for the bucket motor
+                /*
+                    encoderDrive(1, -37, -37, 5);
+
+
+
+                     */
+
             }
             else{
                 System.out.println("Plus3: Rotating Right");
-                rotate(20, .3);
-                if (detector.isFound()){
+                rotate(25, .4);
+                if (detector.isFound() && detector.getAligned()){
                     System.out.println("Plus3: Found Gold");
-                    if (detector.getAligned()){
-                        encoderDrive(1, 25, 25, 5);
-                        System.out.println("Plus3: Alligned Right");
-                    }
+                    encoderDrive(1, 27, 27, 5);
+                    System.out.println("Plus3: Alligned Right");
+                    sleep(100);
+                    rotate(-45, .4);
+                    encoderDrive(1, 22, 22, 5);
+                    System.out.println("Plus3: Continuing to Depot");
+                    //encoderDrive(5,30,5); //place holder for the bucket motor
+                    /*
+                    encoderDrive(1, -37, -37, 5);
+
+
+
+                     */
+
                 }
                 else{
                     System.out.println("Plus3: Rotating Left");
-                    rotate(-40, .3);
-                    encoderDrive(1, 25, 25, 5);
+                    rotate(-55, .4);
+                    encoderDrive(1, 28, 28, 5);
                     System.out.println("Plus3: Alligned Left");
+                    sleep(100);
+                    rotate(45, .4);
+                    encoderDrive(1, 22, 22, 5);
+                    System.out.println("Plus3: Continuing to Depot");
+                    //encoderDrive(5,30,5); //place holder for the bucket motor
+                    /*
+                    encoderDrive(1, -37, -37, 5);
+
+
+
+                     */
+
                 }
             }
             break;
