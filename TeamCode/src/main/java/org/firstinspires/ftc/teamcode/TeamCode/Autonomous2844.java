@@ -41,6 +41,7 @@ public class Autonomous2844 extends LinearOpMode
     private DcMotor intake;
 
     private Servo hangingServo;
+    private Servo lockServo;
 
     private AnalogInput bottomPot;
     private AnalogInput topPot;
@@ -53,17 +54,24 @@ public class Autonomous2844 extends LinearOpMode
     private DistanceSensor sensorRangeLeft;
     private DistanceSensor sensorRangeRight;
 
-    // depot start
-    int rightAngle = -90;
-    int heading = -65;
-    // crater start
-    //int rightAngle = 90;
-    //int heading = 65;
+    boolean isDepot = true;
 
-    int driveExtra = 0;
-    // depot = 0
-    // crater = 7
-    int rotateDelay = 100;
+    private int rightAngle;
+    private int heading;
+    private int driveExtra;
+
+    // depot start
+    static final int rightAngleDeopt = -90;
+    static final int headingDepot = -65;
+
+    // crater start
+    static final int rightAngleCrater = 90;
+    static final int headingCrater = 65;
+
+    static final int driveExtraDepot = 0;
+    static final int driveExtraCrater = 7;
+
+    static final int rotateDelay = 100;
 
     static final double COUNTS_PER_MOTOR_REV  = 28;   //hw spec for rev motor encoder
     static final double DRIVE_GEAR_REDUCTION = 40.0;  //gear reduction for wheel motor
@@ -102,6 +110,21 @@ public class Autonomous2844 extends LinearOpMode
     @Override
     public void runOpMode() throws InterruptedException
     {
+        if (isDepot)
+        {
+            rightAngle = rightAngleDeopt;
+            heading = headingDepot;
+            driveExtra = driveExtraDepot;
+        }
+        else
+        {
+            rightAngle = rightAngleCrater;
+            heading = headingCrater;
+            driveExtra = driveExtraCrater;
+        }
+
+
+
         motorLeft = hardwareMap.dcMotor.get("lmotor"); // main 1 motor
         motorRight = hardwareMap.dcMotor.get("rmotor"); // main 0 motor
         bottomLift = hardwareMap.dcMotor.get("blift"); // main 2 motor
@@ -111,6 +134,8 @@ public class Autonomous2844 extends LinearOpMode
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         hangingServo = hardwareMap.servo.get("hservo"); // main 0 servo
+        lockServo = hardwareMap.servo.get("lockServo"); // secondary 0 servo
+
         bottomPot = hardwareMap.analogInput.get("bottomPot"); // main 0 analog input
         topPot = hardwareMap.analogInput.get("topPot"); // main 2 analog input
 
@@ -227,15 +252,12 @@ public class Autonomous2844 extends LinearOpMode
         }
 */
         System.out.println("ValleyX: Starting .... ");
-/*
-        while (bottomPot.getVoltage() < 1.11) // drop robot
-        {
-            bottomLift.setPower(0.6); // turn on motor
-        }
-        bottomLift.setPower(0.0); // turn off motor
-*/
-        goToPosition(bottomLift, bottomPot,1.391, -0.9);/////////////////*/*/*/*/*//*/*/*/*/*/*/*/*/*/*/**
 
+        lockServo.setPosition(0.0);
+        idle();
+        sleep(100);
+
+        goToPosition(bottomLift, bottomPot,1.391, -0.9);/////////////////*/*/*/*/*//*/*/*/*/*/*/*/*/*/*/**
 
         hangingServo.setPosition(1.0); // release servo
         sleep(1000); // break in between to give time for servo to release
@@ -316,7 +338,7 @@ public class Autonomous2844 extends LinearOpMode
         {
             System.out.println("ValleyX found straight");
             //encoderDrive(1, 20, 20, 5);
-            encoderDrive(speed, -14, -14, 5);///////////////////////////////////////////////***************************
+            encoderDrive(speed, -17, -17, 5);///////////////////////////////////////////////***************************
             rotate(70, 0.2, rotateDelay);
             encoderDrive(speed, 22+driveExtra, 22+driveExtra, 6);////////////////////////////////////////
             rotate(-30, 0.2, rotateDelay);
@@ -378,160 +400,32 @@ public class Autonomous2844 extends LinearOpMode
 
         //try
         motorLeft.setPower(straightPower);
-        motorRight.setPower(straightPower);
+        //motorRight.setPower(straightPower);
 
+        motorRight.setPower(straightPower-checkDirection(rightAngle));
+        idle();
         while ((sensorRangeFront.getDistance(DistanceUnit.INCH) > 30.0) && opModeIsActive())
         {
             motorRight.setPower(straightPower-checkDirection(rightAngle));
+            idle();
         }
 
         motorLeft.setPower(0);
         motorRight.setPower(0);
 
         intake.setPower(-0.6);
-        runtime.reset();
-        while (runtime.seconds() < 1.0 && opModeIsActive());
-        intake.setPower(0.0);
+        //runtime.reset();
+        sleep(500);
+        //while (runtime.seconds() < 1.0 && opModeIsActive());
+        //intake.setPower(0.0);
 
         System.out.println("ValleyX: Go backwards");
 
         // driving backwards
         encoderDriveImu(rightAngle, speed, -65, 10, false); /////////////////
-        /*
-        encoderDrive(0.3, 4, 4, 1);
-        int counter = 0; // 0=straight, 1=right, 2=left
 
-        String foundString = "not found"; //default
-
-        int alignCount = 0; // 0=first alignment, 1=second alignment
-
-        while (opModeIsActive())
-        {
-            //refine isfound to be less than what doge detector says
-            boolean isFound = (detector.getXPosition() < goldIsFoundRightX) &&
-                    (detector.getXPosition() > goldIsFoundLeftX) &&
-                    (detector.isFound() == true);
-
-            telemetry.addData("IsAligned", detector.getAligned()); // Is the bot aligned with the gold mineral
-            telemetry.addData("X Pos", detector.getXPosition()); // Gold X pos in the view 270 - 370 is aligned
-            telemetry.addData("IsFound", isFound); //is the gold in view
-            telemetry.update();
-
-            System.out.println("ValleyXIsAligned " + detector.getAligned()); // Is the bot aligned with the gold mineral
-            System.out.println("ValleyXX Pos " + detector.getXPosition()); // Gold X pos in the view 270 - 370 is aligned
-            System.out.println("ValleyXIsFound " + isFound); //is the gold in view
-            System.out.println("ValleyXdetector IsFound " + detector.isFound()); //is the gold in view
-
-            if (counter == 0)
-            {
-                foundString = "straight";
-                foundRot = FoundRotationLocation.STRAIGHT;
-            }
-
-            if (isFound == false)
-            {
-                System.out.println("ValleyX cube is not found x=" + detector.getXPosition());
-                counter = counter + 1;
-                if (counter == 1)
-                {
-                    foundString = "right";
-                    foundRot = FoundRotationLocation.RIGHT;
-                    System.out.println("ValleyX turning right");
-                    rotate(-10, 0.2); // turning right  to find gold
-                    // turing off motors
-                    motorRight.setPower(0);
-                    motorLeft.setPower(0);
-                }
-                else if (counter == 2)
-                {
-                    foundString = "left";
-                    foundRot = FoundRotationLocation.LEFT;
-                    System.out.println("ValleyX turning left");
-                    rotate(45, 0.2); // turning left to find gold
-                    // turning off motors
-                    motorRight.setPower(0);
-                    motorLeft.setPower(0);
-                }
-                else if (counter == 3)
-                {
-                    System.out.println("ValleyX: Not found trying again");
-                    rotate(-35, 0.2);
-                    encoderDrive(0.3, 4, 4, 1);
-
-                    counter = 0;
-                }
-
-            }
-            else //is found
-            {
-                System.out.println("ValleyX cube is found " + foundString + " X=" + detector.getXPosition() + "Y=" + detector.getYPosition());
-                if ((goldDetectorLeftX < detector.getXPosition()) && (goldDetectorRightX > detector.getXPosition())) {
-                    System.out.println("ValleyX cube is aligned x=" + detector.getXPosition());
-                    if (alignCount == 0) // drive forward to set up for second alignment
-                    {
-                        encoderDrive(0.6, 5, 5, 6);
-                    } else //drive forward to knock of cube
-                    {
-                        encoderDrive(1, 32, 32, 6);
-
-                        System.out.println("ValleyX cube found and knocked off");
-                        break;
-                    }
-                    // pushed alignment parameters to the left to account for phone position on bot for second alignment
-                    goldDetectorRightX -= 150;
-                    goldDetectorLeftX -= 150;
-                    goldDetectorRightX += 10;
-                    goldDetectorLeftX -= 10;
-                    alignCount++;  // increment to do second alignment
-                } else //found but not aligned
-                {
-                    System.out.println("ValleyX cube found but not aligned x=" + detector.getXPosition());
-                    if (detector.getXPosition() < goldDetectorLeftX) {
-                        System.out.println("ValleyX turning right to align cube x=" + detector.getXPosition());
-                        encoderDrive(0.2, 1, -1, 1);
-                    } else {
-                        System.out.println("ValleyX turning left to align cube x=" + detector.getXPosition());
-                        encoderDrive(0.2, -1, 1, 1);
-                    }
-                }
-            }
-            System.out.println("ValleyX: counter " + counter);
-        } // while op mode is active
-
-        detector.disable();
-
-        // initial steps for next part of autonomous after gold detection --> not working for this event
-
-
-      //System.out.println("ValleyX Gold Detector out of break");
-
-        //encoderDrive(0.6, -25, -25, 6);
-
-        if (foundRot == FoundRotationLocation.LEFT)
-        {
-            System.out.println("ValleyX found left");
-            //rotate(5, 0.6);
-            //encoderDrive(0.6, 20, 20, 6);
-        }
-
-        if (foundRot == FoundRotationLocation.STRAIGHT)
-        {
-            System.out.println("ValleyX found straight");
-            //rotate(20, 0.6);
-            //encoderDrive(0.6, 35, 35, 56);
-        }
-
-        if (foundRot == FoundRotationLocation.RIGHT)
-        {
-            System.out.println("ValleyX found right");
-            //rotate(35, 0.6);
-            //encoderDrive(0.6, 40, 40, 6);
-        }
-*/
         System.out.println("ValleyX: ending");
     }
-
-
 
         /**
      * Resets the cumulative angle tracking to zero.
@@ -633,12 +527,12 @@ public class Autonomous2844 extends LinearOpMode
         if (degrees < 0)
         {
             // On right turn we have to get off zero first.
-            while (opModeIsActive() && getAngle() == 0) {}
+            while (opModeIsActive() && getAngle() == 0) { idle();}
 
-            while (opModeIsActive() && getAngle() > degrees) {}
+            while (opModeIsActive() && getAngle() > degrees) { idle();}
         }
         else    // left turn.
-            while (opModeIsActive() && getAngle() < degrees) {}
+            while (opModeIsActive() && getAngle() < degrees) { idle();}
 
         System.out.println("ValleyX in rotate before p=0 angle= " + getAngle());
         System.out.println("ValleyX in rotate before p=0 direction= " + checkDirection(degrees));
@@ -827,9 +721,12 @@ public class Autonomous2844 extends LinearOpMode
         runtime.reset();
         if (pot.getVoltage() < position)
         {
+
             lift.setPower(power);
             while ((pot.getVoltage() < position) && (runtime.seconds() < timeoutS) && opModeIsActive())
             {
+                System.out.println("In Less goToPosition pot voltage " + pot.getVoltage() + " position " + position );
+
                 idle();
             }
             lift.setPower(0.0);
@@ -840,6 +737,7 @@ public class Autonomous2844 extends LinearOpMode
             lift.setPower(-power);
             while ((pot.getVoltage() > position) && (runtime.seconds() < timeoutS) && opModeIsActive())
             {
+                System.out.println("In more goToPosition pot voltage " + pot.getVoltage() + " position " + position );
 
                 idle();
             }
