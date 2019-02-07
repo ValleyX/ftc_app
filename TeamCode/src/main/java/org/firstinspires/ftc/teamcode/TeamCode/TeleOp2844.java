@@ -25,6 +25,7 @@ public class TeleOp2844 extends LinearOpMode
     private AnalogInput topPot;
 
     private Servo hangingServo;
+    private Servo lockServo;
 
     double topMax = 1.946;
     private ElapsedTime runtime = new ElapsedTime();
@@ -49,13 +50,14 @@ public class TeleOp2844 extends LinearOpMode
         topPot = hardwareMap.analogInput.get("topPot"); // main 2 analog input
 
         hangingServo = hardwareMap.servo.get("hservo"); // main 0 servo
+        lockServo = hardwareMap.servo.get("lockServo"); // secondary 0 servo
 
 
         motorLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 
         double gamepad1LeftStickY; // motor left
         double gamepad1RightStickY; // motor right
-        double gamepad2LeftStickY; //
+        double gamepad2LeftStickY;
         double gamepad2RightStickY;
         double gamepad1LeftTrigger;
 
@@ -73,6 +75,7 @@ public class TeleOp2844 extends LinearOpMode
             gamepad1LeftTrigger = gamepad1.left_trigger;
 
             telemetry.addData("gp1", "  leftY=" + gamepad1LeftStickY + "  rightY=" + gamepad1RightStickY);
+            telemetry.addData("gp2", "  leftY=" + gamepad2LeftStickY + "  rightY=" + gamepad2RightStickY);
 
             // gamepad1
             motorLeft.setPower(-gamepad1RightStickY);
@@ -82,6 +85,7 @@ public class TeleOp2844 extends LinearOpMode
             {
                 // hanging servo opening
                 hangingServo.setPosition(1.0);
+                lockServo.setPosition(0.0);
             }
             if (gamepad1.y == true)
             {
@@ -141,6 +145,11 @@ public class TeleOp2844 extends LinearOpMode
                 bottomLift.setPower(0.0);
                 bottomPot.resetDeviceConfigurationForOpMode(); // reset bottomPot to zero
             }
+            if (gamepad1.left_bumper == true) //true means pressed
+            {
+                lockServo.setPosition(1.0);
+            }
+
 
 
 
@@ -234,7 +243,7 @@ public class TeleOp2844 extends LinearOpMode
         if (pot.getVoltage() < position)
         {
             lift.setPower(power);
-            while ((pot.getVoltage() < position) && (runtime.seconds() < timeoutS) && opModeIsActive())
+            while ((pot.getVoltage() < position) && (runtime.seconds() < timeoutS) && opModeIsActive() && (gamepad2.dpad_down == false)) // false = not pressed
             {
                 // gamepad1
                 motorLeft.setPower(-gamepad1.right_stick_y);
@@ -249,7 +258,7 @@ public class TeleOp2844 extends LinearOpMode
         else
         {
             lift.setPower(-power);
-            while ((pot.getVoltage() > position) && (runtime.seconds() < timeoutS) && opModeIsActive())
+            while ((pot.getVoltage() > position) && (runtime.seconds() < timeoutS) && opModeIsActive() && (gamepad2.dpad_down == false)) // false = not pressed
             {
                 // gamepad1
                 motorLeft.setPower(-gamepad1.right_stick_y);

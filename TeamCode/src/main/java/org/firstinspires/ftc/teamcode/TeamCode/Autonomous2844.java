@@ -4,17 +4,20 @@ import com.disnodeteam.dogecv.CameraViewDisplay;
 import com.disnodeteam.dogecv.DogeCV;
 import com.disnodeteam.dogecv.detectors.roverrukus.GoldAlignDetector;
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 @Autonomous(name="Robot: Autonomous2844", group="TeamCode")
@@ -24,6 +27,7 @@ public class Autonomous2844 extends LinearOpMode
 
     BNO055IMU imu;
     Orientation lastAngles = new Orientation();
+    Orientation resetMark = new Orientation();
     double globalAngle, power = .30;
 
     private GoldAlignDetector detector;
@@ -32,10 +36,46 @@ public class Autonomous2844 extends LinearOpMode
     private DcMotor motorRight;
 
     private DcMotor bottomLift;
+    private DcMotor topLift;
+
+    private DcMotor intake;
+
     private Servo hangingServo;
+    private Servo lockServo;
+
     private AnalogInput bottomPot;
+    private AnalogInput topPot;
+
+
     private DigitalChannel digitalTouch;
 
+    private DistanceSensor sensorRangeFront;
+
+    private DistanceSensor sensorRangeFrontLeft;
+    private DistanceSensor sensorRangeFrontRight;
+
+    private DistanceSensor sensorRangeBack;
+    private DistanceSensor sensorRangeLeft;
+    private DistanceSensor sensorRangeRight;
+
+    boolean isDepot = false; /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////**
+
+    private int rightAngle;
+    private int heading;
+    private int driveExtra;
+
+    // depot start
+    static final int rightAngleDeopt = -90;
+    static final int headingDepot = -65;
+
+    // crater start
+    static final int rightAngleCrater = 75;  //82
+    static final int headingCrater = 65;
+
+    static final int driveExtraDepot = 0;
+    static final int driveExtraCrater = 7;
+
+    static final int rotateDelay = 100;
 
     static final double COUNTS_PER_MOTOR_REV  = 28;   //hw spec for rev motor encoder
     static final double DRIVE_GEAR_REDUCTION = 40.0;  //gear reduction for wheel motor
@@ -74,17 +114,61 @@ public class Autonomous2844 extends LinearOpMode
     @Override
     public void runOpMode() throws InterruptedException
     {
+        if (isDepot)
+        {
+            rightAngle = rightAngleDeopt;
+            heading = headingDepot;
+            driveExtra = driveExtraDepot;
+        }
+        else
+        {
+            rightAngle = rightAngleCrater;
+            heading = headingCrater;
+            driveExtra = driveExtraCrater;
+        }
+
         motorLeft = hardwareMap.dcMotor.get("lmotor"); // main 1 motor
         motorRight = hardwareMap.dcMotor.get("rmotor"); // main 0 motor
         bottomLift = hardwareMap.dcMotor.get("blift"); // main 2 motor
+        bottomLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        topLift = hardwareMap.dcMotor.get("tlift"); // main 3 motor
+
+        intake = hardwareMap.dcMotor.get("intake"); // secondary 0 motor --> fix in wiring
+        intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         hangingServo = hardwareMap.servo.get("hservo"); // main 0 servo
+        lockServo = hardwareMap.servo.get("lockServo"); // secondary 0 servo
+
         bottomPot = hardwareMap.analogInput.get("bottomPot"); // main 0 analog input
+        topPot = hardwareMap.analogInput.get("topPot"); // main 2 analog input
+
         digitalTouch = hardwareMap.get(DigitalChannel.class, "touch"); // secondary 0 digital device
         digitalTouch.setMode(DigitalChannel.Mode.INPUT);
 
         motorLeft.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         motorRight.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
 
+        if (isDepot)
+        {
+            sensorRangeFront = hardwareMap.get(DistanceSensor.class, "odsFrontRight"); // main I2C Bus 2 0
+        }
+        else
+        {
+            //sensorRangeFront = hardwareMap.get(DistanceSensor.class, "odsFrontLeft"); // secondary I2C Bus 3
+            sensorRangeFront = hardwareMap.get(DistanceSensor.class, "odsFrontRight"); // main I2C Bus 2 0
+
+        }
+
+        sensorRangeBack = hardwareMap.get(DistanceSensor.class, "odsBack");
+        //sensorRangeLeft = hardwareMap.get(DistanceSensor.class, "odsLeft");
+        sensorRangeRight = hardwareMap.get(DistanceSensor.class, "odsRight");
+
+        // you can also cast this to a Rev2mDistanceSensor if you want to use added
+        // methods associated with the Rev2mDistanceSensor class.
+        Rev2mDistanceSensor distanceFront = (Rev2mDistanceSensor)sensorRangeFront;
+        Rev2mDistanceSensor distanceBack = (Rev2mDistanceSensor)sensorRangeBack;
+        //Rev2mDistanceSensor distanceLeft = (Rev2mDistanceSensor)sensorRangeLeft;
+        Rev2mDistanceSensor distanceRight = (Rev2mDistanceSensor)sensorRangeRight;
 
         detector = new GoldAlignDetector();
 
@@ -98,9 +182,9 @@ public class Autonomous2844 extends LinearOpMode
 
         detector.downscale = 0.4;
 
-        detector.SetRequestedYLine(365); //enhancement to doge detector to only consider scoring
+        detector.SetRequestedYLine(330); //enhancement to doge detector to only consider scoring
                                             //matches >= the Y line
-
+//365
         detector.areaScoringMethod = DogeCV.AreaScoringMethod.PERFECT_AREA;
 
         detector.maxAreaScorer.weight = 0.005;
@@ -168,22 +252,37 @@ public class Autonomous2844 extends LinearOpMode
         telemetry.addData("Status", "Ready for Start");
         telemetry.update();
 
+        lockServo.setPosition(1.0);
+
         waitForStart();
 
+/*
+        while (opModeIsActive())
+        {
+            telemetry.addData("front", sensorRangeFront.getDistance(DistanceUnit.INCH));
+            telemetry.addData("back", sensorRangeBack.getDistance(DistanceUnit.INCH));
+            telemetry.addData("left", sensorRangeLeft.getDistance(DistanceUnit.INCH));
+            telemetry.addData("right", sensorRangeRight.getDistance(DistanceUnit.INCH));
+            telemetry.update();
+        }
+*/
         System.out.println("ValleyX: Starting .... ");
 
-        while (bottomPot.getVoltage() < 1.11) // drop robot
-        {
-            bottomLift.setPower(0.6); // turn on motor
-        }
-        bottomLift.setPower(0.0); // turn off motor
+        bottomLift.setPower(0.9);
+        sleep(150);
+        lockServo.setPosition(0.0);
+        sleep(100);
+        bottomLift.setPower(0.0);
+
+        //goToPosition(bottomLift, bottomPot,1.391, -0.6);/////////////////*/*/*/*/*//*/*/*/*/*/*/*/*/*/*/**
+        goToPosition(bottomLift, bottomPot,1.401, -0.6);/////////////////*/*/*/*/*//*/*/*/*/*/*/*/*/*/*/**
 
         hangingServo.setPosition(1.0); // release servo
         sleep(1000); // break in between to give time for servo to release
 
-        while ((bottomPot.getVoltage() > 0.8) && (digitalTouch.getState() == true)) // lower arm down w/o touch sensor
+        while ((bottomPot.getVoltage() > 1.2) && (digitalTouch.getState() == true)) // lower arm down w/o touch sensor
         {
-            bottomLift.setPower(-0.6); // turn on motor
+            bottomLift.setPower(0.9); // turn on motor
         }
         bottomLift.setPower(0.0); // turn off motor
 
@@ -202,148 +301,165 @@ public class Autonomous2844 extends LinearOpMode
         telemetry.addData("Mode", "calibrated");
         telemetry.update();
 
-
-        encoderDrive(0.3, 4, 4, 1);
-        int counter = 0; // 0=straight, 1=right, 2=left
-
-        String foundString = "not found"; //default
-
-        int alignCount = 0; // 0=first alignment, 1=second alignment
-
-        while (opModeIsActive())
+        ///////////////////////////////////////////////////////GOLD DETECTOR START////////////////////////////////////////////////////
+        double speed = 1.0;
+        //encoderDrive(speed, -4, -4, 3);
+        //while (opModeIsActive());
+        int middleValue = 300;
+        System.out.println("ValleyX: gold is found");
+        if (detector.isFound() == true)
         {
-            //refine isfound to be less than what doge detector says
-            boolean isFound = (detector.getXPosition() < goldIsFoundRightX) &&
-                    (detector.getXPosition() > goldIsFoundLeftX) &&
-                    (detector.isFound() == true);
-
-            telemetry.addData("IsAligned", detector.getAligned()); // Is the bot aligned with the gold mineral
-            telemetry.addData("X Pos", detector.getXPosition()); // Gold X pos in the view 270 - 370 is aligned
-            telemetry.addData("IsFound", isFound); //is the gold in view
-            telemetry.update();
-
-            System.out.println("ValleyXIsAligned " + detector.getAligned()); // Is the bot aligned with the gold mineral
-            System.out.println("ValleyXX Pos " + detector.getXPosition()); // Gold X pos in the view 270 - 370 is aligned
-            System.out.println("ValleyXIsFound " + isFound); //is the gold in view
-            System.out.println("ValleyXdetector IsFound " + detector.isFound()); //is the gold in view
-
-            if (counter == 0)
+            if (detector.getXPosition() > middleValue)
             {
-                foundString = "straight";
+                foundRot = FoundRotationLocation.RIGHT;
+                System.out.println("ValleyX: gold is found right");
+                System.out.println("ValleyX: found right value " + detector.getXPosition());
+                rotate(-15, 0.3, rotateDelay);
+                encoderDrive(speed, 32, 32, 5);
+            }
+            else
+            {
                 foundRot = FoundRotationLocation.STRAIGHT;
+                System.out.println("ValleyX: gold is found middle");
+                System.out.println("ValleyX: found middle value " + detector.getXPosition());
+                encoderDrive(speed, 27, 27, 5);
             }
-
-            if (isFound == false)
-            {
-                System.out.println("ValleyX cube is not found x=" + detector.getXPosition());
-                counter = counter + 1;
-                if (counter == 1)
-                {
-                    foundString = "right";
-                    foundRot = FoundRotationLocation.RIGHT;
-                    System.out.println("ValleyX turning right");
-                    rotate(-10, 0.2); // turning right  to find gold
-                    // turing off motors
-                    motorRight.setPower(0);
-                    motorLeft.setPower(0);
-                }
-                else if (counter == 2)
-                {
-                    foundString = "left";
-                    foundRot = FoundRotationLocation.LEFT;
-                    System.out.println("ValleyX turning left");
-                    rotate(45, 0.2); // turning left to find gold
-                    // turning off motors
-                    motorRight.setPower(0);
-                    motorLeft.setPower(0);
-                }
-                else if (counter == 3)
-                {
-                    System.out.println("ValleyX: Not found trying again");
-                    rotate(-35, 0.2);
-                    encoderDrive(0.3, 4, 4, 1);
-
-                    counter = 0;
-                }
-
-            }
-            else //is found
-            {
-                System.out.println("ValleyX cube is found " + foundString + " X=" + detector.getXPosition() + "Y=" + detector.getYPosition());
-                if ((goldDetectorLeftX < detector.getXPosition()) && (goldDetectorRightX > detector.getXPosition())) {
-                    System.out.println("ValleyX cube is aligned x=" + detector.getXPosition());
-                    if (alignCount == 0) // drive forward to set up for second alignment
-                    {
-                        encoderDrive(0.6, 5, 5, 6);
-                    } else //drive forward to knock of cube
-                    {
-                        encoderDrive(1, 32, 32, 6);
-
-                        System.out.println("ValleyX cube found and knocked off");
-                        break;
-                    }
-                    // pushed alignment parameters to the left to account for phone position on bot for second alignment
-                    goldDetectorRightX -= 150;
-                    goldDetectorLeftX -= 150;
-                    goldDetectorRightX += 10;
-                    goldDetectorLeftX -= 10;
-                    alignCount++;  // increment to do second alignment
-                } else //found but not aligned
-                {
-                    System.out.println("ValleyX cube found but not aligned x=" + detector.getXPosition());
-                    if (detector.getXPosition() < goldDetectorLeftX) {
-                        System.out.println("ValleyX turning right to align cube x=" + detector.getXPosition());
-                        encoderDrive(0.2, 1, -1, 1);
-                    } else {
-                        System.out.println("ValleyX turning left to align cube x=" + detector.getXPosition());
-                        encoderDrive(0.2, -1, 1, 1);
-                    }
-                }
-            }
-            System.out.println("ValleyX: counter " + counter);
-        } // while op mode is active
+        }
+        else
+        {
+            foundRot = FoundRotationLocation.LEFT;
+            System.out.println("ValleyX: gold is found left");
+            System.out.println("ValleyX: found left value " + detector.getXPosition());
+            rotate(15, 0.3, rotateDelay);
+            encoderDrive(speed, 32, 32, 5); /////////////////////////////////////////////////////////
+        }
+        //}
 
         detector.disable();
 
         // initial steps for next part of autonomous after gold detection --> not working for this event
 
-        /*System.out.println("ValleyX Gold Detector out of break");
+        System.out.println("ValleyX Gold Detector done");
         //encoderDrive(0.6, -25, -25, 6);
 
         if (foundRot == FoundRotationLocation.LEFT)
         {
             System.out.println("ValleyX found left");
-            //rotate(5, 0.6);
-            //encoderDrive(0.6, 20, 20, 6);
+            //encoderDrive(1, 22, 22, 5);
+            encoderDrive(speed, -14, -14, 5); /////////////////////////////////////////////////
+            rotate(45, 0.2, rotateDelay);
+            encoderDrive(speed, 15+driveExtra, 15+driveExtra, 6);//////////////////////////////////////////
+            rotate(-30, 0.2, rotateDelay);
         }
 
         if (foundRot == FoundRotationLocation.STRAIGHT)
         {
             System.out.println("ValleyX found straight");
-            //rotate(20, 0.6);
-            //encoderDrive(0.6, 35, 35, 56);
+            //encoderDrive(1, 20, 20, 5);
+            encoderDrive(speed, -14, -14, 5);///////////////////////////////////////////////***************************
+            rotate(70, 0.2, rotateDelay);
+            encoderDrive(speed, 22+driveExtra, 22+driveExtra, 6);////////////////////////////////////////
+            rotate(-30, 0.2, rotateDelay);
         }
 
         if (foundRot == FoundRotationLocation.RIGHT)
         {
             System.out.println("ValleyX found right");
-            //rotate(35, 0.6);
-            //encoderDrive(0.6, 40, 40, 6);
+            //encoderDrive(1, 24, 24, 5);
+            encoderDrive(speed, -14, -14, 5);////////////////////////////////////////////
+            rotate(100, 0.2, rotateDelay);
+            encoderDrive(speed, 30+driveExtra, 30+driveExtra, 6);/////////////////////////////////////
+            rotate(-30, 0.2, rotateDelay);
         }
-        */
+
+        // drive up to wall
+        motorLeft.setPower(speed);
+        motorRight.setPower(speed);
+
+        // drive 4 innches from the wall
+        while ((sensorRangeFront.getDistance(DistanceUnit.INCH) > 4.0) && opModeIsActive())
+        {
+            System.out.println("ValleyX: didstac " + sensorRangeFront.getDistance(DistanceUnit.INCH));
+            idle();
+        }
+
+
+        // drive rest of way up to wall
+        encoderDrive(speed, 8, 8, 5); ///////////////////////////////////////////////////////
+
+        // sleep(1000);
+
+        //resetAngle();
+        motorLeft.setPower(0.0);
+        motorRight.setPower(0.0);
+
+        System.out.println("ValleyX about to back up from wall");
+
+        encoderDrive(speed, -4, -4, 3); /////////////////////////////////////////
+
+        System.out.println("ValleyX backed up, about to turn right bc im a good legs");
+
+        rotate(heading, 0.2, 1000);
+
+        System.out.println("ValleyX turned right like the perfect child i am");
+
+        //while (opModeIsActive());
+        System.out.println("ValleyX after rotate angle= " + getAngle());
+        System.out.println("ValleyX after rotate direction= " + checkDirection(rightAngle));
+
+        goToPosition(topLift, topPot,0.743, 0.9);
+
+        //resetAngle();
+        double straightPower = speed; ///////////////////////////////////////////////////////
+        double adjustPower = 0.1;
+
+        double wallDistance = 4.0;
+        double wallDistanceThresh = 0.25;
+
+        //try
+        motorLeft.setPower(straightPower);
+        //motorRight.setPower(straightPower);
+
+        motorRight.setPower(straightPower-checkDirection(rightAngle));
+        idle();
+        while ((sensorRangeFront.getDistance(DistanceUnit.INCH) > 30.0) && opModeIsActive())
+        {
+            motorRight.setPower(straightPower-checkDirection(rightAngle));
+            idle();
+        }
+
+        motorLeft.setPower(0);
+        motorRight.setPower(0);
+
+        intake.setPower(-0.6);
+        //runtime.reset();
+        sleep(500);
+        //while (runtime.seconds() < 1.0 && opModeIsActive());
+        //intake.setPower(0.0);
+
+        System.out.println("ValleyX: Go backwards");
+
+        if (!isDepot)
+        {
+            rightAngle = 90;
+        }
+        // driving backwards
+        encoderDriveImu(rightAngle, speed, -70, 10, false); /////////////////
+
+        // rainbow -0.99 as a servo
 
         System.out.println("ValleyX: ending");
-
     }
-    /**
+
+        /**
      * Resets the cumulative angle tracking to zero.
      */
-    private void resetAngle()
-    {
-        lastAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-
-        globalAngle = 0;
-    }
+        private void resetAngle()
+        {
+            lastAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES); // records what the last angle read is
+            resetMark = lastAngles;
+            globalAngle = 0; // direction you are pointing at rn (straight)
+        }
 
     /**
      * Get current cumulative angle rotation from last reset.
@@ -356,9 +472,10 @@ public class Autonomous2844 extends LinearOpMode
         // returned as 0 to +180 or 0 to -180 rolling back to -179 or +179 when rotation passes
         // 180 degrees. We detect this transition and track the total cumulative angle of rotation.
 
-        Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES); // same call as before, records local angle
 
         double deltaAngle = angles.firstAngle - lastAngles.firstAngle;
+        double deltaGlobalAngle = angles.firstAngle - resetMark.firstAngle;
 
         if (deltaAngle < -180)
             deltaAngle += 360;
@@ -369,6 +486,9 @@ public class Autonomous2844 extends LinearOpMode
 
         lastAngles = angles;
 
+        System.out.println("ValleyX: globalAngle " + globalAngle);
+        System.out.println("ValleyX: resetMarkAngle " + deltaGlobalAngle);
+
         return globalAngle;
     }
 
@@ -376,7 +496,7 @@ public class Autonomous2844 extends LinearOpMode
      * See if we are moving in a straight line and if not return a power correction value.
      * @return Power adjustment, + is adjust left - is adjust right.
      */
-    private double checkDirection()
+    private double checkDirection(double heading)
     {
         // The gain value determines how sensitive the correction is to direction changes.
         // You will have to experiment with your robot to get small smooth direction changes
@@ -385,12 +505,14 @@ public class Autonomous2844 extends LinearOpMode
 
         angle = getAngle();
 
-        if (angle == 0)
+        if (angle == heading)
             correction = 0;             // no adjustment.
         else
-            correction = -angle;        // reverse sign of angle for correction.
+            correction = (-angle)+heading;        // reverse sign of angle for correction.
 
         correction = correction * gain;
+
+        System.out.println("ValleyX: heading= " + heading + " angle= " + angle + " correction= " + correction);
 
         return correction;
     }
@@ -399,7 +521,7 @@ public class Autonomous2844 extends LinearOpMode
      * Rotate left or right the number of degrees. Does not support turning more than 180 degrees.
      * @param degrees Degrees to turn, + is left - is right
      */
-    private void rotate(int degrees, double power)
+    private void rotate(int degrees, double power, int delay)
     {
         double  leftPower, rightPower;
 
@@ -429,22 +551,36 @@ public class Autonomous2844 extends LinearOpMode
         if (degrees < 0)
         {
             // On right turn we have to get off zero first.
-            while (opModeIsActive() && getAngle() == 0) {}
+            while (opModeIsActive() && getAngle() == 0) { idle();}
 
-            while (opModeIsActive() && getAngle() > degrees) {}
+            while (opModeIsActive() && getAngle() > degrees) { idle();}
         }
         else    // left turn.
-            while (opModeIsActive() && getAngle() < degrees) {}
+            while (opModeIsActive() && getAngle() < degrees) { idle();}
+
+        System.out.println("ValleyX in rotate before p=0 angle= " + getAngle());
+        System.out.println("ValleyX in rotate before p=0 direction= " + checkDirection(degrees));
+
 
         // turn the motors off.
         motorRight.setPower(0);
         motorRight.setPower(0);
 
+        System.out.println("ValleyX in rotate angle= " + getAngle());
+        System.out.println("ValleyX in rotate direction= " + checkDirection(degrees));
+
+
         // wait for rotation to stop.
-        sleep(1000);
+        sleep(delay);
+        //sleep(2);
+
+
+        System.out.println("ValleyX in rotate after sleep angle= " + getAngle());
+        System.out.println("ValleyX in rotate after sleep direction= " + checkDirection(rightAngle));
+
 
         // reset angle tracking on new heading.
-        resetAngle();
+        //resetAngle();
     }
     /*
      *  Method to perform a relative move, based on encoder counts.
@@ -503,6 +639,7 @@ public class Autonomous2844 extends LinearOpMode
                         motorLeft.getCurrentPosition(),
                         motorRight.getCurrentPosition());
                 telemetry.update();
+                idle();
             }
 
             // Stop all motion;
@@ -516,6 +653,122 @@ public class Autonomous2844 extends LinearOpMode
             sleep(1);   // optional pause after each move
         }
     }
+
+
+    /*
+     *  Method to perform a relative move, based on encoder counts.
+     *  Encoders are not reset as the move is based on the current position.
+     *  Move will stop if any of three conditions occur:
+     *  1) Move gets to the desired position
+     *  2) Move runs out of time
+     *  3) Driver stops the opmode running.
+     */
+    public void encoderDriveImu(int heading,
+                                double speed,
+                                double Inches,
+                                double timeoutS,
+                                boolean resetAngle)
+    {
+        int newLeftTarget;
+        int newRightTarget;
+
+        motorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        motorLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        motorRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+
+
+        if (resetAngle)
+        {
+            resetAngle();
+        }
+
+
+        // Ensure that the opmode is still active
+        if (opModeIsActive())
+        {
+
+            // Determine new target position, and pass to motor controller
+            newLeftTarget = motorLeft.getCurrentPosition() + (int)(Inches * COUNTS_PER_INCH);
+            newRightTarget = motorRight.getCurrentPosition() + (int)(Inches * COUNTS_PER_INCH);
+            motorLeft.setTargetPosition(newLeftTarget);
+            motorRight.setTargetPosition(newRightTarget);
+
+            // Turn On RUN_TO_POSITION
+            motorLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            motorRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            // reset the timeout time and start motion.
+            runtime.reset();
+            motorLeft.setPower(Math.abs(speed));
+            motorRight.setPower(Math.abs(speed));
+
+            // keep looping while we are still active, and there is time left, and both motors are running.
+            // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
+            // its target position, the motion will stop.  This is "safer" in the event that the robot will
+            // always end the motion as soon as possible.
+            // However, if you require that BOTH motors have finished their moves before the robot continues
+            // onto the next step, use (isBusy() || isBusy()) in the loop test.
+            while (opModeIsActive() &&
+                    (runtime.seconds() < timeoutS) &&
+                    (motorLeft.isBusy() && motorRight.isBusy()))
+            {
+
+
+                motorRight.setPower(Math.abs(speed) + checkDirection(heading));
+
+                // Display it for the driver.
+                telemetry.addData("Path1",  "Running to %7d :%7d", newLeftTarget,  newRightTarget);
+                telemetry.addData("Path2",  "Running at %7d :%7d",
+                        motorLeft.getCurrentPosition(),
+                        motorRight.getCurrentPosition());
+                telemetry.update();
+            }
+
+            // Stop all motion;
+            motorLeft.setPower(0);
+            motorRight.setPower(0);
+
+            // Turn off RUN_TO_POSITION
+            motorLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            motorRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            sleep(1);   // optional pause after each move
+        }
+    }
+
+    private void goToPosition(DcMotor lift, AnalogInput pot, double position, double power)
+    {
+        double timeoutS = 4.0;
+        runtime.reset();
+        if (pot.getVoltage() < position)
+        {
+
+            lift.setPower(power);
+            while ((pot.getVoltage() < position) && (runtime.seconds() < timeoutS) && opModeIsActive())
+            {
+                System.out.println("In Less goToPosition pot voltage " + pot.getVoltage() + " position " + position );
+
+                idle();
+            }
+            lift.setPower(0.0);
+
+        }
+        else
+        {
+            lift.setPower(-power);
+            while ((pot.getVoltage() > position) && (runtime.seconds() < timeoutS) && opModeIsActive())
+            {
+                System.out.println("In more goToPosition pot voltage " + pot.getVoltage() + " position " + position );
+
+                idle();
+            }
+            lift.setPower(0.0);
+        }
+    }
+
 }
 
 
