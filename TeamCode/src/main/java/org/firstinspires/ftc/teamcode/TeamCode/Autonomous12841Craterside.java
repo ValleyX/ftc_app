@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode.TeamCode;
 import com.disnodeteam.dogecv.CameraViewDisplay;
 import com.disnodeteam.dogecv.DogeCV;
 import com.disnodeteam.dogecv.detectors.roverrukus.GoldAlignDetector;
-import com.disnodeteam.dogecv.detectors.roverrukus.GoldDetector;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -18,8 +17,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
-@Autonomous(name="Pushbot: Autonomous12841", group="Pushbot")
-public class Autonomous12841 extends LinearOpMode {
+@Autonomous(name="Pushbot: Autonomous12841Craterside", group="Pushbot")
+public class Autonomous12841Craterside extends LinearOpMode {
 
     private BNO055IMU imu;
     Orientation             lastAngles = new Orientation();
@@ -32,6 +31,7 @@ public class Autonomous12841 extends LinearOpMode {
     private DcMotor motorLeft;
     private DcMotor motorRight;
     private DcMotor motorlift;
+    private DcMotor motorREV;
 
     private Servo slide;
     private Servo hook;
@@ -70,6 +70,7 @@ public class Autonomous12841 extends LinearOpMode {
         motorLeft = hardwareMap.dcMotor.get("Lmotor");
         motorRight = hardwareMap.dcMotor.get("Rmotor");
         motorlift = hardwareMap.dcMotor.get("Liftmotor");
+        motorREV = hardwareMap.dcMotor.get("Intake");
 
         potentiometer = hardwareMap.analogInput.get("motorliftpot");
 
@@ -119,13 +120,13 @@ public class Autonomous12841 extends LinearOpMode {
 
         // Optional Tuning
 
-        detector.alignSize = 150; // How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
+        detector.alignSize = 175;// How wide (in pixels) is the range in which the gold object will be aligned. (Represented by green bars in the preview)
 
-        detector.alignPosOffset = -180; // How far from center frame to offset this alignment zone. 6inches off center, 22 inches from cube in center.
+        detector.alignPosOffset = -175; // How far from center frame to offset this alignment zone. 6inches off center, 22 inches from cube in center.
 
         detector.downscale = 0.4; // How much to downscale the input frames
 
-        detector.SetRequestedYLine(320); //enhancement to doge detector to only consider scoring
+        detector.SetRequestedYLine(330); //enhancement to doge detector to only consider scoring
 
         detector.areaScoringMethod = DogeCV.AreaScoringMethod.PERFECT_AREA; // Can also be PERFECT_AREA
 
@@ -215,61 +216,102 @@ public class Autonomous12841 extends LinearOpMode {
             //sleep(500); // Sleep one second (Try Ranges from 250 to 1000
             //slide.setPosition(SLIDE_OPEN); // Slide open the upper Servo
             //motorlift.setPower(.40);  // Lower the lift all the way
-            sleep(2000);
-            if (detector.isFound() && detector.getAligned()){
-                encoderDrive(1, 25, 25, 5);
+            sleep(4000);
+
+            while (!armfailsafe.isPressed()) {
+                motorlift.setPower(0.0);
+            }
+
+            if (detector.isFound() && detector.getAligned()) {
+                encoderDrive(1, 20, 20, 5);
                 System.out.println("Plus3: Alligned Straight");
                 sleep(100);
-                encoderDrive(1, 14, 14, 5);
+                /*encoderDrive(1, 14, 14, 5);
                 System.out.println("Plus3: Continuing to Depot");
-                //encoderDrive(5,30,5); //place holder for the bucket motor
-                /*
-                    encoderDrive(1, -37, -37, 5);
+                System.out.println("Plus3: Deploying Marker");
+                motorREV.setPower(-1);//place holder for the bucket motor
+                sleep(1000);
+                motorREV.setPower(0);
+                rotate(-45, .4);
+                encoderDrive(1, 12, 12, 5);
+                encoderDrive(1, 3, 3, 5);
+                rotate(-70, .4);
+                */
+                System.out.println("Plus3: Continuing to Depot");
+                encoderDrive(1,-3,-3,5);
+                rotate(-95,.4);
+                encoderDrive(1,54,54,5);
+                rotate(-27,.4);
+                encoderDrive(1,40,40,5);
+                motorREV.setPower(-1);
+                sleep(1000);
+                motorREV.setPower(0);
+                encoderDrive(1, -75, -75, 5);
 
 
-
-                     */
-
-            }
-            else{
+            } else {
                 System.out.println("Plus3: Rotating Right");
                 rotate(25, .4);
-                if (detector.isFound() && detector.getAligned()){
+                if (detector.isFound() && detector.getAligned()) {
                     System.out.println("Plus3: Found Gold");
-                    encoderDrive(1, 27, 27, 5);
+                    encoderDrive(1, 29, 29, 5);
                     System.out.println("Plus3: Alligned Right");
                     sleep(100);
-                    rotate(-45, .4);
+                    /*rotate(-45, .4);
                     encoderDrive(1, 22, 22, 5);
                     System.out.println("Plus3: Continuing to Depot");
-                    //encoderDrive(5,30,5); //place holder for the bucket motor
-                    /*
-                    encoderDrive(1, -37, -37, 5);
+                System.out.println("Plus3: Deploying Marker");
+                    motorREV.setPower(-7);//place holder for the bucket motor
+                    sleep(1000);
+                    motorREV.setPower(0);
+                    rotate(-70, .4);
+                    encoderDrive(1, 24, 24, 5);
+                    rotate(-35, .4);
+                    encoderDrive(1, 70, 70, 5);
+                    */
+                    System.out.println("Plus3: Continuing to Depot");
+                    encoderDrive(1,-11,-11,5);
+                    rotate(-110,.4);
+                    encoderDrive(1,52,52,5);
+                    rotate(-34,.4);
+                    encoderDrive(1,40,40,5);
+                    System.out.println("Plus3: Deploying Marker");
+                    motorREV.setPower(-1);
+                    sleep(1000);
+                    motorREV.setPower(0);
+                    encoderDrive(1, -75, -75, 5);
 
-
-
-                     */
-
-                }
-                else{
+                } else {
                     System.out.println("Plus3: Rotating Left");
                     rotate(-55, .4);
                     encoderDrive(1, 28, 28, 5);
                     System.out.println("Plus3: Alligned Left");
                     sleep(100);
-                    rotate(45, .4);
-                    encoderDrive(1, 22, 22, 5);
+                    /*rotate(45, .4);
+                    encoderDrive(1, 25, 25, 5);
                     System.out.println("Plus3: Continuing to Depot");
-                    //encoderDrive(5,30,5); //place holder for the bucket motor
-                    /*
-                    encoderDrive(1, -37, -37, 5);
-
-
-
-                     */
+                    System.out.println("Plus3: Deploying Marker");
+                    motorREV.setPower(-1);//place holder for the bucket motor
+                    sleep(1000);
+                    motorREV.setPower(0);
+                    rotate(20, .4);
+                    encoderDrive(1, -72, -72, 5);
+                    */
+                    System.out.println("Plus3: Continuing to Depot");
+                    encoderDrive(1,-3,-3,5);
+                    rotate(-65,.4);
+                    encoderDrive(1,37.5,37.5,5);
+                    rotate(-20,.4);
+                    encoderDrive(1,35,35,5);
+                    System.out.println("Plus3: Deploying Marker");
+                    motorREV.setPower(-1);
+                    sleep(1000);
+                    motorREV.setPower(0);
+                    encoderDrive(1, -75, -75, 5);
 
                 }
             }
+
             break;
         }
 
