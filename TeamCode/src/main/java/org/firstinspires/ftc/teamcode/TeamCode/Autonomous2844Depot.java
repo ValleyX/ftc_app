@@ -17,11 +17,10 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
-@Autonomous(name="Robot: Autonomous2844", group="TeamCode")
-public class Autonomous2844 extends LinearOpMode
+@Autonomous(name="Robot: Autonomous2844Depot", group="TeamCode")
+public class Autonomous2844Depot extends LinearOpMode
 {
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -58,7 +57,7 @@ public class Autonomous2844 extends LinearOpMode
     private DistanceSensor sensorRangeLeft;
     private DistanceSensor sensorRangeRight;
 
-    boolean isDepot = false; /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////**
+    boolean isDepot = true; /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////**
 
     private int rightAngle;
     private int heading;
@@ -66,13 +65,14 @@ public class Autonomous2844 extends LinearOpMode
 
     // depot start
     static final int rightAngleDeopt = -90;
-    static final int headingDepot = -65;
+    static final int headingDepot = -68;
 
     // crater start
-    static final int rightAngleCrater = 75;  //82
-    static final int headingCrater = 65;
+   // static final int rightAngleCrater = 75;  //82
+    static final int rightAngleCrater = 90;  //82
+    static final int headingCrater = 68;
 
-    static final int driveExtraDepot = 0;
+    static final int driveExtraDepot = 1;
     static final int driveExtraCrater = 7;
 
     static final int rotateDelay = 100;
@@ -297,6 +297,9 @@ public class Autonomous2844 extends LinearOpMode
             sleep(50);
             idle();
         }
+        if (!imu.isGyroCalibrated()) {
+          System.out.println("Gyro not calibrated");
+        }
 
         telemetry.addData("Mode", "calibrated");
         telemetry.update();
@@ -358,7 +361,7 @@ public class Autonomous2844 extends LinearOpMode
             //encoderDrive(1, 20, 20, 5);
             encoderDrive(speed, -14, -14, 5);///////////////////////////////////////////////***************************
             rotate(70, 0.2, rotateDelay);
-            encoderDrive(speed, 22+driveExtra, 22+driveExtra, 6);////////////////////////////////////////
+            encoderDrive(speed, 24+driveExtra, 24+driveExtra, 6);////////////////////////////////////////
             rotate(-30, 0.2, rotateDelay);
         }
 
@@ -366,26 +369,26 @@ public class Autonomous2844 extends LinearOpMode
         {
             System.out.println("ValleyX found right");
             //encoderDrive(1, 24, 24, 5);
-            encoderDrive(speed, -14, -14, 5);////////////////////////////////////////////
+            encoderDrive(speed, -16, -16, 5);////////////////////////////////////////////
             rotate(100, 0.2, rotateDelay);
-            encoderDrive(speed, 30+driveExtra, 30+driveExtra, 6);/////////////////////////////////////
+            encoderDrive(speed, 32+driveExtra, 32+driveExtra, 6);/////////////////////////////////////
             rotate(-30, 0.2, rotateDelay);
         }
 
         // drive up to wall
         motorLeft.setPower(speed);
         motorRight.setPower(speed);
-
-        // drive 4 innches from the wall
+/*
+        // drive 4 inches from the wall
         while ((sensorRangeFront.getDistance(DistanceUnit.INCH) > 4.0) && opModeIsActive())
         {
             System.out.println("ValleyX: didstac " + sensorRangeFront.getDistance(DistanceUnit.INCH));
             idle();
         }
-
+*/
 
         // drive rest of way up to wall
-        encoderDrive(speed, 8, 8, 5); ///////////////////////////////////////////////////////
+        encoderDrive(speed, 14, 14, 0.75); ///////////////////////////////////////////////////////
 
         // sleep(1000);
 
@@ -400,6 +403,10 @@ public class Autonomous2844 extends LinearOpMode
         System.out.println("ValleyX backed up, about to turn right bc im a good legs");
 
         rotate(heading, 0.2, 1000);
+
+        //System.out.println("ValleyX trying rotate again");
+
+        //rotate((int)(-(globalAngle - rightAngle)), 0.1, 1000);
 
         System.out.println("ValleyX turned right like the perfect child i am");
 
@@ -416,6 +423,11 @@ public class Autonomous2844 extends LinearOpMode
         double wallDistance = 4.0;
         double wallDistanceThresh = 0.25;
 
+       // encoderDriveImu(rightAngle, speed, 40, 10, false); /////////////////
+        //encoderDriveImu(rightAngle, 0.7, 40, 10, false); /////////////////
+        encoderDrive(speed, 41, 41, 10); ///////////////////////////////////////////////////////
+
+/*
         //try
         motorLeft.setPower(straightPower);
         //motorRight.setPower(straightPower);
@@ -430,7 +442,7 @@ public class Autonomous2844 extends LinearOpMode
 
         motorLeft.setPower(0);
         motorRight.setPower(0);
-
+*/
         intake.setPower(-0.6);
         //runtime.reset();
         sleep(500);
@@ -444,7 +456,7 @@ public class Autonomous2844 extends LinearOpMode
             rightAngle = 90;
         }
         // driving backwards
-        encoderDriveImu(rightAngle, speed, -70, 10, false); /////////////////
+        encoderDriveImu(rightAngle, speed, -69, 10, false); /////////////////
 
         // rainbow -0.99 as a servo
 
