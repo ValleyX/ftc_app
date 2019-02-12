@@ -92,7 +92,7 @@ public class TeleOp2844 extends LinearOpMode
                 // hanging servo closing
                 hangingServo.setPosition(0.0);
             }
-
+/*
             if (gamepad1.a == true) // pressed
             {
                 // move bottom lift to hanging pos
@@ -145,6 +145,7 @@ public class TeleOp2844 extends LinearOpMode
                 bottomLift.setPower(0.0);
                 bottomPot.resetDeviceConfigurationForOpMode(); // reset bottomPot to zero
             }
+            */
             if (gamepad1.left_bumper == true) //true means pressed
             {
                 lockServo.setPosition(1.0);

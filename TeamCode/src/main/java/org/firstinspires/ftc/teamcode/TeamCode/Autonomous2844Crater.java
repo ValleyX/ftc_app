@@ -19,6 +19,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
+import static java.lang.System.exit;
+
 @Autonomous(name="Robot: Autonomous2844Crater", group="TeamCode")
 public class Autonomous2844Crater extends LinearOpMode
 {
@@ -48,14 +50,14 @@ public class Autonomous2844Crater extends LinearOpMode
 
     private DigitalChannel digitalTouch;
 
-    private DistanceSensor sensorRangeFront;
+    //private DistanceSensor sensorRangeFront;
 
-    private DistanceSensor sensorRangeFrontLeft;
-    private DistanceSensor sensorRangeFrontRight;
+    //private DistanceSensor sensorRangeFrontLeft;
+    //private DistanceSensor sensorRangeFrontRight;
 
-    private DistanceSensor sensorRangeBack;
-    private DistanceSensor sensorRangeLeft;
-    private DistanceSensor sensorRangeRight;
+    //private DistanceSensor sensorRangeBack;
+    //private DistanceSensor sensorRangeLeft;
+   // private DistanceSensor sensorRangeRight;
 
     boolean isDepot = false; /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////**
 
@@ -65,7 +67,7 @@ public class Autonomous2844Crater extends LinearOpMode
 
     // depot start
     static final int rightAngleDeopt = -90;
-    static final int headingDepot = -65;
+    static final int headingDepot = -62;
 
     // crater start
    // static final int rightAngleCrater = 75;  //82
@@ -147,7 +149,7 @@ public class Autonomous2844Crater extends LinearOpMode
 
         motorLeft.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         motorRight.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
-
+/*
         if (isDepot)
         {
             sensorRangeFront = hardwareMap.get(DistanceSensor.class, "odsFrontRight"); // main I2C Bus 2 0
@@ -158,17 +160,17 @@ public class Autonomous2844Crater extends LinearOpMode
             sensorRangeFront = hardwareMap.get(DistanceSensor.class, "odsFrontRight"); // main I2C Bus 2 0
 
         }
-
-        sensorRangeBack = hardwareMap.get(DistanceSensor.class, "odsBack");
+*/
+        //sensorRangeBack = hardwareMap.get(DistanceSensor.class, "odsBack");
         //sensorRangeLeft = hardwareMap.get(DistanceSensor.class, "odsLeft");
-        sensorRangeRight = hardwareMap.get(DistanceSensor.class, "odsRight");
+        //sensorRangeRight = hardwareMap.get(DistanceSensor.class, "odsRight");
 
         // you can also cast this to a Rev2mDistanceSensor if you want to use added
         // methods associated with the Rev2mDistanceSensor class.
-        Rev2mDistanceSensor distanceFront = (Rev2mDistanceSensor)sensorRangeFront;
-        Rev2mDistanceSensor distanceBack = (Rev2mDistanceSensor)sensorRangeBack;
+        //Rev2mDistanceSensor distanceFront = (Rev2mDistanceSensor)sensorRangeFront;
+        //Rev2mDistanceSensor distanceBack = (Rev2mDistanceSensor)sensorRangeBack;
         //Rev2mDistanceSensor distanceLeft = (Rev2mDistanceSensor)sensorRangeLeft;
-        Rev2mDistanceSensor distanceRight = (Rev2mDistanceSensor)sensorRangeRight;
+        //Rev2mDistanceSensor distanceRight = (Rev2mDistanceSensor)sensorRangeRight;
 
         detector = new GoldAlignDetector();
 
@@ -185,7 +187,7 @@ public class Autonomous2844Crater extends LinearOpMode
         detector.SetRequestedYLine(330); //enhancement to doge detector to only consider scoring
                                             //matches >= the Y line
 //365
-        detector.areaScoringMethod = DogeCV.AreaScoringMethod.PERFECT_AREA;
+        detector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA;
 
         detector.maxAreaScorer.weight = 0.005;
         detector.ratioScorer.weight = 5;
@@ -371,7 +373,7 @@ public class Autonomous2844Crater extends LinearOpMode
             //encoderDrive(1, 24, 24, 5);
             encoderDrive(speed, -14, -14, 5);////////////////////////////////////////////
             rotate(100, 0.2, rotateDelay);
-            encoderDrive(speed, 32+driveExtra, 32+driveExtra, 6);/////////////////////////////////////
+            encoderDrive(speed, 36+driveExtra, 36+driveExtra, 6);/////////////////////////////////////
             rotate(-30, 0.2, rotateDelay);
         }
 
@@ -414,8 +416,7 @@ public class Autonomous2844Crater extends LinearOpMode
         System.out.println("ValleyX after rotate angle= " + getAngle());
         System.out.println("ValleyX after rotate direction= " + checkDirection(rightAngle));
 
-        goToPosition(topLift, topPot,0.743, 0.9);
-
+        goToPosition(topLift, topPot,0.4, 0.9); // 0.743
         //resetAngle();
         double straightPower = speed; ///////////////////////////////////////////////////////
         double adjustPower = 0.1;
@@ -456,7 +457,7 @@ public class Autonomous2844Crater extends LinearOpMode
             rightAngle = 90;
         }
         // driving backwards
-        encoderDriveImu(rightAngle, speed, -68, 10, false); /////////////////
+        encoderDriveImu(rightAngle, speed, -72, 10, false); /////////////////
 
         // rainbow -0.99 as a servo
 
@@ -589,6 +590,10 @@ public class Autonomous2844Crater extends LinearOpMode
 
         System.out.println("ValleyX in rotate after sleep angle= " + getAngle());
         System.out.println("ValleyX in rotate after sleep direction= " + checkDirection(rightAngle));
+        if (!opModeIsActive())
+        {
+            exit(0);
+        }
 
 
         // reset angle tracking on new heading.
@@ -664,6 +669,11 @@ public class Autonomous2844Crater extends LinearOpMode
 
             sleep(1);   // optional pause after each move
         }
+        if (!opModeIsActive())
+        {
+            exit(0);
+        }
+
     }
 
 
@@ -748,6 +758,11 @@ public class Autonomous2844Crater extends LinearOpMode
             motorRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
             sleep(1);   // optional pause after each move
+            if (!opModeIsActive())
+            {
+                exit(0);
+            }
+
         }
     }
 
@@ -779,6 +794,11 @@ public class Autonomous2844Crater extends LinearOpMode
             }
             lift.setPower(0.0);
         }
+        if (!opModeIsActive())
+        {
+            exit(0);
+        }
+
     }
 
 }
