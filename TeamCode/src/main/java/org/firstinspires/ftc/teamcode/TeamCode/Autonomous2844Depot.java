@@ -7,6 +7,7 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
@@ -17,11 +18,12 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
-@Autonomous(name="Robot: Autonomous2844", group="TeamCode")
-public class Autonomous2844 extends LinearOpMode
+import static java.lang.System.exit;
+
+@Autonomous(name="Robot: Autonomous2844Depot", group="TeamCode")
+public class Autonomous2844Depot extends LinearOpMode
 {
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -49,30 +51,21 @@ public class Autonomous2844 extends LinearOpMode
 
     private DigitalChannel digitalTouch;
 
-    private DistanceSensor sensorRangeFront;
-
-    private DistanceSensor sensorRangeFrontLeft;
-    private DistanceSensor sensorRangeFrontRight;
-
-    private DistanceSensor sensorRangeBack;
-    private DistanceSensor sensorRangeLeft;
-    private DistanceSensor sensorRangeRight;
-
-    boolean isDepot = false; /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////**
-
+    boolean isDepot = true;
     private int rightAngle;
     private int heading;
     private int driveExtra;
 
     // depot start
     static final int rightAngleDeopt = -90;
-    static final int headingDepot = -65;
+    static final int headingDepot = -58; //-58
 
     // crater start
-    static final int rightAngleCrater = 75;  //82
-    static final int headingCrater = 65;
+   // static final int rightAngleCrater = 75;  //82
+    static final int rightAngleCrater = 90;  //82
+    static final int headingCrater = 58; //68
 
-    static final int driveExtraDepot = 0;
+    static final int driveExtraDepot = 1;
     static final int driveExtraCrater = 7;
 
     static final int rotateDelay = 100;
@@ -147,7 +140,7 @@ public class Autonomous2844 extends LinearOpMode
 
         motorLeft.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         motorRight.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
-
+/*
         if (isDepot)
         {
             sensorRangeFront = hardwareMap.get(DistanceSensor.class, "odsFrontRight"); // main I2C Bus 2 0
@@ -158,17 +151,17 @@ public class Autonomous2844 extends LinearOpMode
             sensorRangeFront = hardwareMap.get(DistanceSensor.class, "odsFrontRight"); // main I2C Bus 2 0
 
         }
-
-        sensorRangeBack = hardwareMap.get(DistanceSensor.class, "odsBack");
+*/
+        //sensorRangeBack = hardwareMap.get(DistanceSensor.class, "odsBack");
         //sensorRangeLeft = hardwareMap.get(DistanceSensor.class, "odsLeft");
-        sensorRangeRight = hardwareMap.get(DistanceSensor.class, "odsRight");
+        //sensorRangeRight = hardwareMap.get(DistanceSensor.class, "odsRight");
 
         // you can also cast this to a Rev2mDistanceSensor if you want to use added
         // methods associated with the Rev2mDistanceSensor class.
-        Rev2mDistanceSensor distanceFront = (Rev2mDistanceSensor)sensorRangeFront;
-        Rev2mDistanceSensor distanceBack = (Rev2mDistanceSensor)sensorRangeBack;
+       // Rev2mDistanceSensor distanceFront = (Rev2mDistanceSensor)sensorRangeFront;
+        //Rev2mDistanceSensor distanceBack = (Rev2mDistanceSensor)sensorRangeBack;
         //Rev2mDistanceSensor distanceLeft = (Rev2mDistanceSensor)sensorRangeLeft;
-        Rev2mDistanceSensor distanceRight = (Rev2mDistanceSensor)sensorRangeRight;
+        //Rev2mDistanceSensor distanceRight = (Rev2mDistanceSensor)sensorRangeRight;
 
         detector = new GoldAlignDetector();
 
@@ -185,7 +178,7 @@ public class Autonomous2844 extends LinearOpMode
         detector.SetRequestedYLine(330); //enhancement to doge detector to only consider scoring
                                             //matches >= the Y line
 //365
-        detector.areaScoringMethod = DogeCV.AreaScoringMethod.PERFECT_AREA;
+        detector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA;
 
         detector.maxAreaScorer.weight = 0.005;
         detector.ratioScorer.weight = 5;
@@ -223,6 +216,30 @@ public class Autonomous2844 extends LinearOpMode
         // and named "imu".
         imu = hardwareMap.get(BNO055IMU.class, "imu");
 
+        System.out.println("ValleyX: Waiting for Start");
+
+        telemetry.addData("Status", "Ready for Start");
+        telemetry.update();
+
+        lockServo.setPosition(1.0);
+
+        waitForStart();
+
+        System.out.println("ValleyX: Starting .... ");
+
+
+
+        bottomLift.setPower(0.9);
+        sleep(150);
+        lockServo.setPosition(0.0);
+        sleep(100);
+        bottomLift.setPower(0.0);
+
+
+        //goToPosition(bottomLift, bottomPot,1.391, -0.6);//////////////
+        goToPosition(bottomLift, bottomPot,1.401, -0.6);/////////////
+
+
         /* ---new remapping code --*/
         //swapping y & z axis due to vertical mounting of rev expansion board
 
@@ -246,7 +263,7 @@ public class Autonomous2844 extends LinearOpMode
 
         sleep(100); //Changing modes again requires a delay
         /* ---new remapping code ---*/
-
+/*
         System.out.println("ValleyX: Waiting for Start");
 
         telemetry.addData("Status", "Ready for Start");
@@ -256,17 +273,9 @@ public class Autonomous2844 extends LinearOpMode
 
         waitForStart();
 
-/*
-        while (opModeIsActive())
-        {
-            telemetry.addData("front", sensorRangeFront.getDistance(DistanceUnit.INCH));
-            telemetry.addData("back", sensorRangeBack.getDistance(DistanceUnit.INCH));
-            telemetry.addData("left", sensorRangeLeft.getDistance(DistanceUnit.INCH));
-            telemetry.addData("right", sensorRangeRight.getDistance(DistanceUnit.INCH));
-            telemetry.update();
-        }
-*/
         System.out.println("ValleyX: Starting .... ");
+
+
 
         bottomLift.setPower(0.9);
         sleep(150);
@@ -274,13 +283,14 @@ public class Autonomous2844 extends LinearOpMode
         sleep(100);
         bottomLift.setPower(0.0);
 
-        //goToPosition(bottomLift, bottomPot,1.391, -0.6);/////////////////*/*/*/*/*//*/*/*/*/*/*/*/*/*/*/**
-        goToPosition(bottomLift, bottomPot,1.401, -0.6);/////////////////*/*/*/*/*//*/*/*/*/*/*/*/*/*/*/**
 
+        //goToPosition(bottomLift, bottomPot,1.391, -0.6);//////////////
+        goToPosition(bottomLift, bottomPot,1.401, -0.6);/////////////
+*/
         hangingServo.setPosition(1.0); // release servo
         sleep(1000); // break in between to give time for servo to release
 
-        while ((bottomPot.getVoltage() > 1.2) && (digitalTouch.getState() == true)) // lower arm down w/o touch sensor
+        while ((bottomPot.getVoltage() > 1.2) && (digitalTouch.getState() == true) && (opModeIsActive())) // lower arm down w/o touch sensor
         {
             bottomLift.setPower(0.9); // turn on motor
         }
@@ -296,6 +306,9 @@ public class Autonomous2844 extends LinearOpMode
         {
             sleep(50);
             idle();
+        }
+        if (!imu.isGyroCalibrated()) {
+          System.out.println("Gyro not calibrated");
         }
 
         telemetry.addData("Mode", "calibrated");
@@ -358,7 +371,7 @@ public class Autonomous2844 extends LinearOpMode
             //encoderDrive(1, 20, 20, 5);
             encoderDrive(speed, -14, -14, 5);///////////////////////////////////////////////***************************
             rotate(70, 0.2, rotateDelay);
-            encoderDrive(speed, 22+driveExtra, 22+driveExtra, 6);////////////////////////////////////////
+            encoderDrive(speed, 26+driveExtra, 26+driveExtra, 6);////////////////////////////////////////
             rotate(-30, 0.2, rotateDelay);
         }
 
@@ -366,26 +379,26 @@ public class Autonomous2844 extends LinearOpMode
         {
             System.out.println("ValleyX found right");
             //encoderDrive(1, 24, 24, 5);
-            encoderDrive(speed, -14, -14, 5);////////////////////////////////////////////
+            encoderDrive(speed, -16, -16, 5);////////////////////////////////////////////
             rotate(100, 0.2, rotateDelay);
-            encoderDrive(speed, 30+driveExtra, 30+driveExtra, 6);/////////////////////////////////////
+            encoderDrive(speed, 37+driveExtra, 37+driveExtra, 6);/////////////////////////////////////
             rotate(-30, 0.2, rotateDelay);
         }
 
         // drive up to wall
         motorLeft.setPower(speed);
         motorRight.setPower(speed);
-
-        // drive 4 innches from the wall
+/*
+        // drive 4 inches from the wall
         while ((sensorRangeFront.getDistance(DistanceUnit.INCH) > 4.0) && opModeIsActive())
         {
             System.out.println("ValleyX: didstac " + sensorRangeFront.getDistance(DistanceUnit.INCH));
             idle();
         }
-
+*/
 
         // drive rest of way up to wall
-        encoderDrive(speed, 8, 8, 5); ///////////////////////////////////////////////////////
+        encoderDrive(speed, 14, 14, 0.75); ///////////////////////////////////////////////////////
 
         // sleep(1000);
 
@@ -401,13 +414,17 @@ public class Autonomous2844 extends LinearOpMode
 
         rotate(heading, 0.2, 1000);
 
+        //System.out.println("ValleyX trying rotate again");
+
+        //rotate((int)(-(globalAngle - rightAngle)), 0.1, 1000);
+
         System.out.println("ValleyX turned right like the perfect child i am");
 
         //while (opModeIsActive());
         System.out.println("ValleyX after rotate angle= " + getAngle());
         System.out.println("ValleyX after rotate direction= " + checkDirection(rightAngle));
 
-        goToPosition(topLift, topPot,0.743, 0.9);
+        goToPosition(topLift, topPot,0.4, 0.9); // 0.743
 
         //resetAngle();
         double straightPower = speed; ///////////////////////////////////////////////////////
@@ -416,6 +433,17 @@ public class Autonomous2844 extends LinearOpMode
         double wallDistance = 4.0;
         double wallDistanceThresh = 0.25;
 
+       // encoderDriveImu(rightAngle, speed, 40, 10, false); /////////////////
+        //encoderDriveImu(rightAngle, 0.7, 40, 10, false); /////////////////
+        if (foundRot == FoundRotationLocation.RIGHT)
+        {
+            encoderDrive(speed, 44, 44, 10); ///////////////////////////////////////////////////////
+        }
+        else
+        {
+            encoderDrive(speed, 41, 41, 10); ///////////////////////////////////////////////////////
+        }
+/*
         //try
         motorLeft.setPower(straightPower);
         //motorRight.setPower(straightPower);
@@ -430,7 +458,7 @@ public class Autonomous2844 extends LinearOpMode
 
         motorLeft.setPower(0);
         motorRight.setPower(0);
-
+*/
         intake.setPower(-0.6);
         //runtime.reset();
         sleep(500);
@@ -444,7 +472,7 @@ public class Autonomous2844 extends LinearOpMode
             rightAngle = 90;
         }
         // driving backwards
-        encoderDriveImu(rightAngle, speed, -70, 10, false); /////////////////
+        encoderDriveImu(rightAngle, speed, -72, 10, false); /////////////////
 
         // rainbow -0.99 as a servo
 
@@ -569,6 +597,10 @@ public class Autonomous2844 extends LinearOpMode
         System.out.println("ValleyX in rotate angle= " + getAngle());
         System.out.println("ValleyX in rotate direction= " + checkDirection(degrees));
 
+        if (!opModeIsActive())
+        {
+            return;
+        }
 
         // wait for rotation to stop.
         sleep(delay);
@@ -652,6 +684,11 @@ public class Autonomous2844 extends LinearOpMode
 
             sleep(1);   // optional pause after each move
         }
+        if (!opModeIsActive())
+        {
+            return;
+        }
+
     }
 
 
@@ -736,6 +773,11 @@ public class Autonomous2844 extends LinearOpMode
             motorRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
             sleep(1);   // optional pause after each move
+            if (!opModeIsActive())
+            {
+                return;
+            }
+
         }
     }
 
@@ -767,6 +809,11 @@ public class Autonomous2844 extends LinearOpMode
             }
             lift.setPower(0.0);
         }
+        if (!opModeIsActive())
+        {
+            return;
+        }
+
     }
 
 }
