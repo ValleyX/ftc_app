@@ -20,7 +20,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 @Autonomous(name="Pushbot: Autonomous12841Depotside", group="Pushbot")
 public class Autonomous12841Depotside extends LinearOpMode {
-
+//identifying all different assets used in programming and caling whcih one are going to be used
     private BNO055IMU imu;
     Orientation             lastAngles = new Orientation();
     double globalAngle, power = .30, correction;
@@ -36,13 +36,12 @@ public class Autonomous12841Depotside extends LinearOpMode {
 
     private Servo slide;
     private Servo hook;
-    private Servo bucketBack;
     private Servo bucketTop;
 
     AnalogInput potentiometer;
 
     private ElapsedTime runtime = new ElapsedTime();
-
+//setting values for severaal open or closed positions in the program fpr easier access as variables
     static final double COUNTS_PER_MOTOR_REV = 28;
     static final double DRIVE_GEAR_REDUCTION = 40.0;
     static final double WHEEL_DIAMETER_INCHES = 3.9;
@@ -55,18 +54,16 @@ public class Autonomous12841Depotside extends LinearOpMode {
     static final double HOOK_OPEN = .9;  //Hook Servo 3
     static final double HOOK_CLOSE = 1;  //Hook Servo 3
 
-    static final double BUCKET_BACK_OPEN = .45;  // Servo 2
-    static final double BUCKET_BACK_CLOSE = .95; // Servo 2
-
     static final double BUCKET_TOP_OPEN = .54; // Servo 1
     static final double BUCKET_TOP_CLOSE = 1.0;  //Servo 1
 
 
     static final double POTENTIOMETER_VERTICAL = 1.47;
+    static final double POTENTIOMETER_0 = 0.59;
 
 
     @Override
-    public void runOpMode() throws InterruptedException
+    public void runOpMode() throws InterruptedException //Getting the hardware maps for all the hardware we are going to use
     {
         motorLeft = hardwareMap.dcMotor.get("Lmotor");
         motorRight = hardwareMap.dcMotor.get("Rmotor");
@@ -77,7 +74,6 @@ public class Autonomous12841Depotside extends LinearOpMode {
 
         slide = hardwareMap.servo.get("hangingservo");
         hook = hardwareMap.servo.get("hangingclaw");
-        bucketBack = hardwareMap.servo.get("bucketBack");
         bucketTop = hardwareMap.servo.get("bucketTop");
 
         armfailsafe = hardwareMap.touchSensor.get("armfailsafe");
@@ -111,7 +107,7 @@ public class Autonomous12841Depotside extends LinearOpMode {
 
         telemetry.addData("imu calib status", imu.getCalibrationStatus().toString());
         telemetry.update();
-
+//setting up all the detector parts
         detector = new GoldAlignDetector();
 
         detector.init(hardwareMap.appContext, CameraViewDisplay.getInstance());
@@ -129,7 +125,7 @@ public class Autonomous12841Depotside extends LinearOpMode {
 
         detector.SetRequestedYLine(330); //enhancement to doge detector to only consider scoring
 
-        detector.areaScoringMethod = DogeCV.AreaScoringMethod.PERFECT_AREA; // Can also be PERFECT_AREA
+        detector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA; // Can also be PERFECT_AREA
 
         detector.perfectAreaScorer.perfectArea = 10000; // if using PERFECT_AREA scoring
 
@@ -139,12 +135,6 @@ public class Autonomous12841Depotside extends LinearOpMode {
         detector.enable();
 
         //SET UP DOORS.
-
-        bucketBack.setPosition(BUCKET_BACK_CLOSE);
-        bucketTop.setPosition(BUCKET_TOP_CLOSE);
-
-
-
 
         telemetry.addData("status:","Waiting for Start...");
         telemetry.update();
@@ -185,7 +175,7 @@ public class Autonomous12841Depotside extends LinearOpMode {
 
             System.out.println("Plus3: isPressed="+armfailsafe.isPressed());
 
-            if (!armfailsafe.isPressed()){
+            /*if (!armfailsafe.isPressed()){
                 motorlift.setPower(-.8);
                 //motorRight.setPower(0);
                 //motorLeft.setPower(0);
@@ -194,7 +184,20 @@ public class Autonomous12841Depotside extends LinearOpMode {
                 System.out.println("Plus3: isPressed="+armfailsafe.isPressed());
                 hook.setPosition(HOOK_OPEN);
                 sleep(50);
+            }*/
+            if (!armfailsafe.isPressed() && potentiometer.getVoltage() > POTENTIOMETER_0){
+                motorlift.setPower(-.8);
+                while (opModeIsActive() && !armfailsafe.isPressed() && potentiometer.getVoltage() > POTENTIOMETER_0){
+                    sleep(100);
+                }
+                hook.setPosition(HOOK_OPEN);
+                motorlift.setPower(0);
             }
+            else{
+                hook.setPosition(HOOK_OPEN);
+            }
+
+
             sleep(250);
             System.out.println("Plus3: Voltage="+potentiometer.getVoltage());
 
@@ -219,7 +222,7 @@ public class Autonomous12841Depotside extends LinearOpMode {
             //motorlift.setPower(.40);  // Lower the lift all the way
             sleep(4000);
 
-            while (!armfailsafe.isPressed()) {
+            if (!armfailsafe.isPressed()) {
                 motorlift.setPower(0.0);
             }
             if (detector.isFound() && detector.getAligned()) {

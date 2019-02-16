@@ -21,7 +21,6 @@ public class TeleopPlus3 extends LinearOpMode
     private Servo hook;
     private Servo slide;
     private Servo Lid;
-    private Servo Rear;
 
     private TouchSensor armfailsafe;
 //    private OpticalDistanceSensor forward;
@@ -29,17 +28,14 @@ public class TeleopPlus3 extends LinearOpMode
 
     AnalogInput potentiometer;
 
-    static final double SLIDE_OPEN = 0.17;  //Servo 4
+    static final double SLIDE_OPEN = 0.1;  //Servo 4
     static final double SLIDE_CLOSE = 0.42; //Servo 4
 
     static final double HOOK_OPEN = .9;  //Hook Servo 3
     static final double HOOK_CLOSE = 1;  //Hook Servo 3
 
-    static final double BUCKET_BACK_OPEN = .45;  // Servo 2
-    static final double BUCKET_BACK_CLOSE = .95; // Servo 2
-
-    static final double BUCKET_TOP_OPEN = .45; // Servo 1
-    static final double BUCKET_TOP_CLOSE = 1.0;  //Servo 1
+    static final double BUCKET_TOP_CLOSE = .48; // Servo 1
+    static final double BUCKET_TOP_OPEN = 0.71;  //Servo 1
 
     static final double MOTOR_LIFT_0 = 0.582;
     static final double MOTOR_LIFT_20 = 0.735;
@@ -58,7 +54,6 @@ public class TeleopPlus3 extends LinearOpMode
         hook = hardwareMap.servo.get("hangingclaw");
         slide = hardwareMap.servo.get("hangingservo");
         Lid = hardwareMap.servo.get("bucketTop");
-        Rear = hardwareMap.servo.get("bucketBack");
 
         armfailsafe = hardwareMap.touchSensor.get("armfailsafe");
 //        forward = hardwareMap.opticalDistanceSensor.get("frontsensor");
@@ -81,6 +76,8 @@ public class TeleopPlus3 extends LinearOpMode
         boolean direction_open = true;
         boolean lock_arm = false;
         double armVoltage = 0.0;
+
+        // TODO: Set default state for servos here
 
         System.out.println("Plus3: voltage = " + potentiometer.getVoltage()); //0 degrees = 0.582, 20 degrees = 0.735, 90 degrees = 1.332, 110 degrees = 1.627
         while (opModeIsActive())
@@ -113,7 +110,6 @@ public class TeleopPlus3 extends LinearOpMode
                 //sets motor to 0 degrees
                 if(gamepad2.dpad_left) {
                     Lid.setPosition(BUCKET_TOP_CLOSE);
-                    Rear.setPosition(BUCKET_BACK_CLOSE);
                     lb_pressed = true;
                     rb_pressed = false;
                     down_pressed = false;
@@ -130,7 +126,6 @@ public class TeleopPlus3 extends LinearOpMode
                 //sets motor to 20 degrees
                 if (gamepad2.dpad_down) {
                     Lid.setPosition(BUCKET_TOP_CLOSE);
-                    Rear.setPosition(BUCKET_BACK_CLOSE);
                     down_pressed = true;
                     rb_pressed = false;
                     lb_pressed = false;
@@ -154,7 +149,6 @@ public class TeleopPlus3 extends LinearOpMode
                 //sets motor to 90 degrees
                 if (gamepad2.dpad_right) {
                     Lid.setPosition(BUCKET_TOP_CLOSE);
-                    Rear.setPosition(BUCKET_BACK_CLOSE);
                     rb_pressed = true;
                     lb_pressed = false;
                     up_pressed = false;
@@ -175,7 +169,6 @@ public class TeleopPlus3 extends LinearOpMode
                 //sets motor to 100 degrees
                 if (gamepad2.dpad_up) {
                     Lid.setPosition(BUCKET_TOP_CLOSE);
-                    Rear.setPosition(BUCKET_BACK_CLOSE);
                     up_pressed = true;
                     down_pressed = false;
                     rb_pressed = false;
@@ -202,25 +195,25 @@ public class TeleopPlus3 extends LinearOpMode
                 {
                     motorleft.setPower(0);
                     motorright.setPower(0);
-                    slide.setPosition(.42);
+                    slide.setPosition(SLIDE_CLOSE);
                 }
                 if(gamepad2.left_bumper)
                 {
                     motorleft.setPower(0);
                     motorright.setPower(0);
-                    slide.setPosition(.17);
+                    slide.setPosition(SLIDE_OPEN);
                 }
                 if(gamepad2.left_stick_button)
                 {
                     motorleft.setPower(0);
                     motorright.setPower(0);
-                    hook.setPosition(0.9);
+                    hook.setPosition(HOOK_OPEN);
                 }
                 if(gamepad2.right_stick_button)
                 {
                     motorleft.setPower(0);
                     motorright.setPower(0);
-                    hook.setPosition(1);
+                    hook.setPosition(HOOK_CLOSE);
                 }
                 if (gamepad2.x)
                 {
@@ -250,16 +243,7 @@ public class TeleopPlus3 extends LinearOpMode
                         motorlift.setPower(0.0);
                     }
                 }
-                if (gamepad2.a)
-                {
-                    System.out.println("Plus3: Rear Closing");
-                    Rear.setPosition(BUCKET_BACK_CLOSE);
-                }
-                if (gamepad2.b)
-                {
-                    System.out.println("Plus3: Rear Opening");
-                    Rear.setPosition(BUCKET_BACK_OPEN);
-                }
+                //motorREV.setPower(-1);
                 if (gamepad1.right_bumper)
                 {
                     System.out.println("Plus3: Spinning Forward");
@@ -273,7 +257,7 @@ public class TeleopPlus3 extends LinearOpMode
                 else
                 {
                     motorREV.setPower(0);
-                    }
+                }
                 idle();
             }
 
