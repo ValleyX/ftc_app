@@ -4,13 +4,11 @@ import com.disnodeteam.dogecv.CameraViewDisplay;
 import com.disnodeteam.dogecv.DogeCV;
 import com.disnodeteam.dogecv.detectors.roverrukus.GoldAlignDetector;
 import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -19,7 +17,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
-import static java.lang.System.exit;
 
 @Autonomous(name="Robot: Autonomous2844Crater", group="TeamCode")
 public class Autonomous2844Crater extends LinearOpMode
@@ -43,6 +40,7 @@ public class Autonomous2844Crater extends LinearOpMode
 
     private Servo hangingServo;
     private Servo lockServo;
+    private Servo led;
 
     private AnalogInput bottomPot;
     private AnalogInput topPot;
@@ -60,9 +58,8 @@ public class Autonomous2844Crater extends LinearOpMode
     static final int headingDepot = -62;
 
     // crater start
-   // static final int rightAngleCrater = 75;  //82
-    static final int rightAngleCrater = 90;  //82
-    static final int headingCrater = 68;
+    static final int rightAngleCrater = 90;
+    static final int headingCrater = 58;
 
     static final int driveExtraDepot = 0;
     static final int driveExtraCrater = 7;
@@ -112,11 +109,14 @@ public class Autonomous2844Crater extends LinearOpMode
         bottomLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         topLift = hardwareMap.dcMotor.get("tlift"); // main 3 motor
 
-        intake = hardwareMap.dcMotor.get("intake"); // secondary 0 motor --> fix in wiring
+        intake = hardwareMap.dcMotor.get("intake"); // secondary 0 motor
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        intake.setDirection(DcMotor.Direction.REVERSE);
 
         hangingServo = hardwareMap.servo.get("hservo"); // main 0 servo
         lockServo = hardwareMap.servo.get("lockServo"); // secondary 0 servo
+
+        //led = hardwareMap.servo.get("ledservo"); // main 1 servo
 
         bottomPot = hardwareMap.analogInput.get("bottomPot"); // main 0 analog input
         topPot = hardwareMap.analogInput.get("topPot"); // main 2 analog input
@@ -180,6 +180,8 @@ public class Autonomous2844Crater extends LinearOpMode
         // and named "imu".
         imu = hardwareMap.get(BNO055IMU.class, "imu");
 
+        //led.setPosition(0.57); /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
         System.out.println("ValleyX: Waiting for Start");
 
         telemetry.addData("Status", "Ready for Start");
@@ -227,7 +229,7 @@ public class Autonomous2844Crater extends LinearOpMode
         hangingServo.setPosition(1.0); // release servo
         sleep(1000); // break in between to give time for servo to release
 
-        while ((bottomPot.getVoltage() > 1.2) && (digitalTouch.getState() == true)) // lower arm down w/o touch sensor
+        while ((bottomPot.getVoltage() > 1.0) && (digitalTouch.getState() == true)) // lower arm down w/o touch sensor
         {
             bottomLift.setPower(0.9); // turn on motor
         }
@@ -253,8 +255,6 @@ public class Autonomous2844Crater extends LinearOpMode
 
         ///////////////////////////////////////////////////////GOLD DETECTOR START////////////////////////////////////////////////////
         double speed = 1.0;
-        //encoderDrive(speed, -4, -4, 3);
-        //while (opModeIsActive());
         int middleValue = 300;
         System.out.println("ValleyX: gold is found");
         if (detector.isFound() == true)
@@ -294,7 +294,6 @@ public class Autonomous2844Crater extends LinearOpMode
         if (foundRot == FoundRotationLocation.LEFT)
         {
             System.out.println("ValleyX found left");
-            //encoderDrive(1, 22, 22, 5);
             encoderDrive(speed, -14, -14, 5);
             rotate(45, 0.2, rotateDelay);
             encoderDrive(speed, 15+driveExtra, 15+driveExtra, 6);
@@ -304,7 +303,6 @@ public class Autonomous2844Crater extends LinearOpMode
         if (foundRot == FoundRotationLocation.STRAIGHT)
         {
             System.out.println("ValleyX found straight");
-            //encoderDrive(1, 20, 20, 5);
             encoderDrive(speed, -14, -14, 5);
             rotate(70, 0.2, rotateDelay);
             encoderDrive(speed, 22+driveExtra, 22+driveExtra, 6);
@@ -343,12 +341,12 @@ public class Autonomous2844Crater extends LinearOpMode
         System.out.println("ValleyX after rotate angle= " + getAngle());
         System.out.println("ValleyX after rotate direction= " + checkDirection(rightAngle));
 
-        goToPosition(topLift, topPot,0.4, 0.9); // 0.743
+        goToPosition(topLift, topPot,0.5, 0.9);
 
-        encoderDrive(speed, 40, 40, 10);
+        encoderDrive(speed, 37, 37, 10);
 
         intake.setPower(-0.6);
-        sleep(500);
+        sleep(1000);
 
         System.out.println("ValleyX: Go backwards");
 
@@ -357,7 +355,7 @@ public class Autonomous2844Crater extends LinearOpMode
             rightAngle = 90;
         }
         // driving backwards
-        encoderDriveImu(rightAngle, speed, -72, 10, false); /////////////////
+        encoderDriveImu(rightAngle, speed, -71, 10, false);
 
         // rainbow -0.99 as a servo
 
@@ -445,12 +443,12 @@ public class Autonomous2844Crater extends LinearOpMode
         // clockwise (right).
 
         if (degrees < 0)
-        {   // turn right.
+        {   // turn right
             leftPower = -power;
             rightPower = power;
         }
         else if (degrees > 0)
-        {   // turn left.
+        {   // turn left
             leftPower = power;
             rightPower = -power;
         }
@@ -471,32 +469,20 @@ public class Autonomous2844Crater extends LinearOpMode
         else    // left turn.
             while (opModeIsActive() && getAngle() < degrees) { idle();}
 
-        System.out.println("ValleyX in rotate before p=0 angle= " + getAngle());
-        System.out.println("ValleyX in rotate before p=0 direction= " + checkDirection(degrees));
-
 
         // turn the motors off.
         motorRight.setPower(0);
         motorRight.setPower(0);
 
-        System.out.println("ValleyX in rotate angle= " + getAngle());
-        System.out.println("ValleyX in rotate direction= " + checkDirection(degrees));
-
 
         // wait for rotation to stop.
         sleep(delay);
 
-
-        System.out.println("ValleyX in rotate after sleep angle= " + getAngle());
-        System.out.println("ValleyX in rotate after sleep direction= " + checkDirection(rightAngle));
         if (!opModeIsActive())
         {
             return;
         }
 
-
-        // reset angle tracking on new heading.
-        //resetAngle();
     }
     /*
      *  Method to perform a relative move, based on encoder counts.

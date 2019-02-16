@@ -28,6 +28,8 @@ public class TeleOp2844 extends LinearOpMode
     private Servo lockServo;
 
     double topMax = 1.946;
+    double topClosed = 0.001;
+    double bottomClosed = 0.6;
     private ElapsedTime runtime = new ElapsedTime();
 
     @Override
@@ -94,7 +96,7 @@ public class TeleOp2844 extends LinearOpMode
                 // hanging servo closing
                 hangingServo.setPosition(0.0);
             }
-/*
+
             if (gamepad1.a == true) // pressed
             {
                 // move bottom lift to hanging pos
@@ -103,27 +105,34 @@ public class TeleOp2844 extends LinearOpMode
                 motorRight.setPower(0.0);
 
                 // close top
+                goToPosition(topLift, topPot, topClosed, 0.6);
+                /*
                 while (topPot.getVoltage() > 0.35)
                 {
                     topLift.setPower(-0.6);
                 }
                 topLift.setPower(0.0);
-
+*/
                 // open up to get to hanging
+                goToPosition(bottomLift, bottomPot, 1.345, -0.6);
+                /*
                 while (bottomPot.getVoltage() < 1.39)
                 {
                     bottomLift.setPower(-0.6);
                 }
                 bottomLift.setPower(0.0);
 
-                // closing to get to haning
+                // closing to get to hanging
                 while (bottomPot.getVoltage() > 1.48)
                 {
                     bottomLift.setPower(0.6);
                 }
                 bottomLift.setPower(0.0);
+                */
             }
 
+
+/*
             if (gamepad1.b == true) //pressed
             {
                 // move bottom lift to zero/starting pos
@@ -131,23 +140,31 @@ public class TeleOp2844 extends LinearOpMode
                 motorLeft.setPower(0.0);
                 motorRight.setPower(0.0);
 
+                lockServo.setPosition(0.0);
                 // closing top
+                goToPosition(topLift, topPot, topClosed, 0.6);
+
                 while (topPot.getVoltage() > 0.35)
                 {
                     topLift.setPower(-0.6);
                 }
-                topLift.setPower(0.0);
-                topPot.resetDeviceConfigurationForOpMode(); // reset topPot to zero
+
+                //topLift.setPower(0.0);
+                //topPot.resetDeviceConfigurationForOpMode(); // reset topPot to zero
 
                 // closing bottom
+                goToPosition(bottomLift, bottomPot, bottomClosed, -0.6);
+
                 while (digitalTouch.getState() == true) // true means not pressed
                 {
                     bottomLift.setPower(0.6);
                 }
                 bottomLift.setPower(0.0);
                 bottomPot.resetDeviceConfigurationForOpMode(); // reset bottomPot to zero
-            }
-            */
+
+            }*/
+
+
             if (gamepad1.left_bumper == true) //true means pressed
             {
                 lockServo.setPosition(1.0);
@@ -183,31 +200,8 @@ public class TeleOp2844 extends LinearOpMode
                 motorLeft.setPower(0.0);
                 motorRight.setPower(0.0);
 
-                //goToPosition(bottomLift, bottomPot, 1.26, -0.6);
-                goToPosition(topLift, topPot, 1.0, 0.6);
-
-                /*
-                while (topPot.getVoltage() < topMax)
-                {
-                    topLift.setPower(0.6);
-                }
-                topLift.setPower(0.0);
-
-                // bottom to unloading position --> opening
-                while (bottomPot.getVoltage() < 1.2)
-                {
-                    bottomLift.setPower(-0.6);
-                }
-                bottomLift.setPower(0.0);
-
-                // bottom to unloading position --> closing
-                while (bottomPot.getVoltage() > 1.2)
-                {
-                    bottomLift.setPower(0.6);
-                }
-                bottomLift.setPower(0.0);
-*/
-                //idle();
+                goToPosition(bottomLift, bottomPot, 1.2, -0.6);
+                goToPosition(topLift, topPot, 1.04, 0.6); //1.0
             }
 
             if (gamepad2.right_bumper == true) // motor for intake --> in
@@ -223,8 +217,23 @@ public class TeleOp2844 extends LinearOpMode
                 intake.setPower(0.0);
             }
 
-            bottomLift.setPower(-gamepad2LeftStickY);
-            topLift.setPower(gamepad2RightStickY);
+            if ((gamepad2LeftStickY < 0.0) && (bottomPot.getVoltage() < bottomClosed))
+            {
+                bottomLift.setPower(0.0);
+            }
+            else
+            {
+                bottomLift.setPower(-gamepad2LeftStickY);
+            }
+
+            if ((gamepad2RightStickY < 0.0) && (topPot.getVoltage() < topClosed))
+            {
+                topLift.setPower(0.0);
+            }
+            else
+            {
+                topLift.setPower(gamepad2RightStickY);
+            }
 
             telemetry.addData("bottomPot values ", bottomPot.getVoltage());
             telemetry.addData("topPot values ", topPot.getVoltage());
