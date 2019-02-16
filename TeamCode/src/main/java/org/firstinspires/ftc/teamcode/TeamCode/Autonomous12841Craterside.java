@@ -35,7 +35,6 @@ public class Autonomous12841Craterside extends LinearOpMode {
 
     private Servo slide;
     private Servo hook;
-    private Servo bucketBack;
     private Servo bucketTop;
 
     AnalogInput potentiometer;
@@ -54,14 +53,12 @@ public class Autonomous12841Craterside extends LinearOpMode {
     static final double HOOK_OPEN = .9;  //Hook Servo 3
     static final double HOOK_CLOSE = 1;  //Hook Servo 3
 
-    static final double BUCKET_BACK_OPEN = .45;  // Servo 2
-    static final double BUCKET_BACK_CLOSE = .95; // Servo 2
-
     static final double BUCKET_TOP_OPEN = .54; // Servo 1
     static final double BUCKET_TOP_CLOSE = 1.0;  //Servo 1
 
 
     static final double POTENTIOMETER_VERTICAL = 1.47;
+    static final double POTENTIOMETER_0 = 0.582;
 
 
     @Override
@@ -76,7 +73,6 @@ public class Autonomous12841Craterside extends LinearOpMode {
 
         slide = hardwareMap.servo.get("hangingservo");
         hook = hardwareMap.servo.get("hangingclaw");
-        bucketBack = hardwareMap.servo.get("bucketBack");
         bucketTop = hardwareMap.servo.get("bucketTop");
 
         armfailsafe = hardwareMap.touchSensor.get("armfailsafe");
@@ -128,7 +124,7 @@ public class Autonomous12841Craterside extends LinearOpMode {
 
         detector.SetRequestedYLine(330); //enhancement to doge detector to only consider scoring
 
-        detector.areaScoringMethod = DogeCV.AreaScoringMethod.PERFECT_AREA; // Can also be PERFECT_AREA
+        detector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA; // Can also be PERFECT_AREA
 
         detector.perfectAreaScorer.perfectArea = 10000; // if using PERFECT_AREA scoring
 
@@ -136,13 +132,6 @@ public class Autonomous12841Craterside extends LinearOpMode {
         detector.ratioScorer.weight = 5;
         detector.ratioScorer.perfectRatio = 1.0;
         detector.enable();
-
-        //SET UP DOORS.
-
-        bucketBack.setPosition(BUCKET_BACK_CLOSE);
-        bucketTop.setPosition(BUCKET_TOP_CLOSE);
-
-
 
 
         telemetry.addData("status:","Waiting for Start...");
@@ -184,7 +173,7 @@ public class Autonomous12841Craterside extends LinearOpMode {
 
             System.out.println("Plus3: isPressed="+armfailsafe.isPressed());
 
-            if (!armfailsafe.isPressed()){
+            /*if (!armfailsafe.isPressed()){
                 motorlift.setPower(-.8);
                 //motorRight.setPower(0);
                 //motorLeft.setPower(0);
@@ -193,6 +182,17 @@ public class Autonomous12841Craterside extends LinearOpMode {
                 System.out.println("Plus3: isPressed="+armfailsafe.isPressed());
                 hook.setPosition(HOOK_OPEN);
                 sleep(50);
+            }*/
+            if (!armfailsafe.isPressed() && potentiometer.getVoltage() > POTENTIOMETER_0){
+                motorlift.setPower(-.8);
+                while (opModeIsActive() && !armfailsafe.isPressed() && potentiometer.getVoltage() > POTENTIOMETER_0){
+                    sleep(100);
+                }
+                hook.setPosition(HOOK_OPEN);
+                motorlift.setPower(0);
+            }
+            else{
+                hook.setPosition(HOOK_OPEN);
             }
             sleep(250);
             System.out.println("Plus3: Voltage="+potentiometer.getVoltage());
@@ -218,7 +218,7 @@ public class Autonomous12841Craterside extends LinearOpMode {
             //motorlift.setPower(.40);  // Lower the lift all the way
             sleep(4000);
 
-            while (!armfailsafe.isPressed()) {
+            if (!armfailsafe.isPressed()) {
                 motorlift.setPower(0.0);
             }
 
@@ -240,9 +240,9 @@ public class Autonomous12841Craterside extends LinearOpMode {
                 System.out.println("Plus3: Continuing to Depot");
                 encoderDrive(1,-3,-3,5);
                 rotate(-95,.4);
-                encoderDrive(1,54,54,5);
-                rotate(-27,.4);
-                encoderDrive(1,40,40,5);
+                encoderDrive(1,59,59,5);
+                rotate(-21,.4);
+                encoderDrive(1,25,25,5);
                 motorREV.setPower(-1);
                 sleep(1000);
                 motorREV.setPower(0);
@@ -272,9 +272,9 @@ public class Autonomous12841Craterside extends LinearOpMode {
                     System.out.println("Plus3: Continuing to Depot");
                     encoderDrive(1,-11,-11,5);
                     rotate(-110,.4);
-                    encoderDrive(1,52,52,5);
+                    encoderDrive(1,57,57,5);
                     rotate(-34,.4);
-                    encoderDrive(1,40,40,5);
+                    encoderDrive(1,37,37,5);
                     System.out.println("Plus3: Deploying Marker");
                     motorREV.setPower(-1);
                     sleep(1000);
@@ -299,7 +299,7 @@ public class Autonomous12841Craterside extends LinearOpMode {
                     */
                     System.out.println("Plus3: Continuing to Depot");
                     encoderDrive(1,-3,-3,5);
-                    rotate(-65,.4);
+                    rotate(-58,.4);
                     encoderDrive(1,37.5,37.5,5);
                     rotate(-20,.4);
                     encoderDrive(1,35,35,5);
@@ -307,7 +307,7 @@ public class Autonomous12841Craterside extends LinearOpMode {
                     motorREV.setPower(-1);
                     sleep(1000);
                     motorREV.setPower(0);
-                    encoderDrive(1, -75, -75, 5);
+                    encoderDrive(1, -78, -78, 5);
 
                 }
             }
