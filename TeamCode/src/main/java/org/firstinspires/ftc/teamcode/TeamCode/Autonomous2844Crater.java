@@ -50,17 +50,7 @@ public class Autonomous2844Crater extends LinearOpMode
 
     private DigitalChannel digitalTouch;
 
-    //private DistanceSensor sensorRangeFront;
-
-    //private DistanceSensor sensorRangeFrontLeft;
-    //private DistanceSensor sensorRangeFrontRight;
-
-    //private DistanceSensor sensorRangeBack;
-    //private DistanceSensor sensorRangeLeft;
-   // private DistanceSensor sensorRangeRight;
-
-    boolean isDepot = false; /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////**
-
+    boolean isDepot = false;
     private int rightAngle;
     private int heading;
     private int driveExtra;
@@ -98,20 +88,7 @@ public class Autonomous2844Crater extends LinearOpMode
 
     FoundRotationLocation foundRot = FoundRotationLocation.STRAIGHT; // default to straight
 
-    // initial aligned x and y dimentions
-    int goldDetectorLeftX = 260;
-    int goldDetectorRightX = 320;
-
-    // final aligned x and y dementions --> moved over because of phone position
-    static final int goldIsFoundLeftX = 70;
-    static final int goldIsFoundRightX = 530;
-
     //converts degrees to inches for the given bot
-    public double degToInches (double degrees)
-    {
-        return (((1.0/360.0)* degrees) * CIRCUMFERENCE);
-
-    }
 
     @Override
     public void runOpMode() throws InterruptedException
@@ -149,28 +126,6 @@ public class Autonomous2844Crater extends LinearOpMode
 
         motorLeft.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         motorRight.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
-/*
-        if (isDepot)
-        {
-            sensorRangeFront = hardwareMap.get(DistanceSensor.class, "odsFrontRight"); // main I2C Bus 2 0
-        }
-        else
-        {
-            //sensorRangeFront = hardwareMap.get(DistanceSensor.class, "odsFrontLeft"); // secondary I2C Bus 3
-            sensorRangeFront = hardwareMap.get(DistanceSensor.class, "odsFrontRight"); // main I2C Bus 2 0
-
-        }
-*/
-        //sensorRangeBack = hardwareMap.get(DistanceSensor.class, "odsBack");
-        //sensorRangeLeft = hardwareMap.get(DistanceSensor.class, "odsLeft");
-        //sensorRangeRight = hardwareMap.get(DistanceSensor.class, "odsRight");
-
-        // you can also cast this to a Rev2mDistanceSensor if you want to use added
-        // methods associated with the Rev2mDistanceSensor class.
-        //Rev2mDistanceSensor distanceFront = (Rev2mDistanceSensor)sensorRangeFront;
-        //Rev2mDistanceSensor distanceBack = (Rev2mDistanceSensor)sensorRangeBack;
-        //Rev2mDistanceSensor distanceLeft = (Rev2mDistanceSensor)sensorRangeLeft;
-        //Rev2mDistanceSensor distanceRight = (Rev2mDistanceSensor)sensorRangeRight;
 
         detector = new GoldAlignDetector();
 
@@ -225,6 +180,25 @@ public class Autonomous2844Crater extends LinearOpMode
         // and named "imu".
         imu = hardwareMap.get(BNO055IMU.class, "imu");
 
+        System.out.println("ValleyX: Waiting for Start");
+
+        telemetry.addData("Status", "Ready for Start");
+        telemetry.update();
+
+        lockServo.setPosition(1.0);
+
+        waitForStart();
+
+        System.out.println("ValleyX: Starting .... ");
+
+        bottomLift.setPower(0.9);
+        sleep(150);
+        lockServo.setPosition(0.0);
+        sleep(100);
+        bottomLift.setPower(0.0);
+
+        goToPosition(bottomLift, bottomPot,1.401, -0.6);
+
         /* ---new remapping code --*/
         //swapping y & z axis due to vertical mounting of rev expansion board
 
@@ -249,35 +223,6 @@ public class Autonomous2844Crater extends LinearOpMode
         sleep(100); //Changing modes again requires a delay
         /* ---new remapping code ---*/
 
-        System.out.println("ValleyX: Waiting for Start");
-
-        telemetry.addData("Status", "Ready for Start");
-        telemetry.update();
-
-        lockServo.setPosition(1.0);
-
-        waitForStart();
-
-/*
-        while (opModeIsActive())
-        {
-            telemetry.addData("front", sensorRangeFront.getDistance(DistanceUnit.INCH));
-            telemetry.addData("back", sensorRangeBack.getDistance(DistanceUnit.INCH));
-            telemetry.addData("left", sensorRangeLeft.getDistance(DistanceUnit.INCH));
-            telemetry.addData("right", sensorRangeRight.getDistance(DistanceUnit.INCH));
-            telemetry.update();
-        }
-*/
-        System.out.println("ValleyX: Starting .... ");
-
-        bottomLift.setPower(0.9);
-        sleep(150);
-        lockServo.setPosition(0.0);
-        sleep(100);
-        bottomLift.setPower(0.0);
-
-        //goToPosition(bottomLift, bottomPot,1.391, -0.6);/////////////////*/*/*/*/*//*/*/*/*/*/*/*/*/*/*/**
-        goToPosition(bottomLift, bottomPot,1.401, -0.6);/////////////////*/*/*/*/*//*/*/*/*/*/*/*/*/*/*/**
 
         hangingServo.setPosition(1.0); // release servo
         sleep(1000); // break in between to give time for servo to release
@@ -336,24 +281,23 @@ public class Autonomous2844Crater extends LinearOpMode
             System.out.println("ValleyX: gold is found left");
             System.out.println("ValleyX: found left value " + detector.getXPosition());
             rotate(15, 0.3, rotateDelay);
-            encoderDrive(speed, 32, 32, 5); /////////////////////////////////////////////////////////
+            encoderDrive(speed, 32, 32, 5);
         }
-        //}
+
 
         detector.disable();
 
         // initial steps for next part of autonomous after gold detection --> not working for this event
 
         System.out.println("ValleyX Gold Detector done");
-        //encoderDrive(0.6, -25, -25, 6);
 
         if (foundRot == FoundRotationLocation.LEFT)
         {
             System.out.println("ValleyX found left");
             //encoderDrive(1, 22, 22, 5);
-            encoderDrive(speed, -14, -14, 5); /////////////////////////////////////////////////
+            encoderDrive(speed, -14, -14, 5);
             rotate(45, 0.2, rotateDelay);
-            encoderDrive(speed, 15+driveExtra, 15+driveExtra, 6);//////////////////////////////////////////
+            encoderDrive(speed, 15+driveExtra, 15+driveExtra, 6);
             rotate(-30, 0.2, rotateDelay);
         }
 
@@ -361,94 +305,50 @@ public class Autonomous2844Crater extends LinearOpMode
         {
             System.out.println("ValleyX found straight");
             //encoderDrive(1, 20, 20, 5);
-            encoderDrive(speed, -14, -14, 5);///////////////////////////////////////////////***************************
+            encoderDrive(speed, -14, -14, 5);
             rotate(70, 0.2, rotateDelay);
-            encoderDrive(speed, 22+driveExtra, 22+driveExtra, 6);////////////////////////////////////////
+            encoderDrive(speed, 22+driveExtra, 22+driveExtra, 6);
             rotate(-30, 0.2, rotateDelay);
         }
 
         if (foundRot == FoundRotationLocation.RIGHT)
         {
             System.out.println("ValleyX found right");
-            //encoderDrive(1, 24, 24, 5);
-            encoderDrive(speed, -14, -14, 5);////////////////////////////////////////////
+            encoderDrive(speed, -14, -14, 5);
             rotate(100, 0.2, rotateDelay);
-            encoderDrive(speed, 36+driveExtra, 36+driveExtra, 6);/////////////////////////////////////
+            encoderDrive(speed, 36+driveExtra, 36+driveExtra, 6);
             rotate(-30, 0.2, rotateDelay);
         }
 
         // drive up to wall
         motorLeft.setPower(speed);
         motorRight.setPower(speed);
-/*
-        // drive 4 inches from the wall
-        while ((sensorRangeFront.getDistance(DistanceUnit.INCH) > 4.0) && opModeIsActive())
-        {
-            System.out.println("ValleyX: didstac " + sensorRangeFront.getDistance(DistanceUnit.INCH));
-            idle();
-        }
-*/
 
         // drive rest of way up to wall
-        encoderDrive(speed, 14, 14, 0.75); ///////////////////////////////////////////////////////
+        encoderDrive(speed, 14, 14, 0.75);
 
-        // sleep(1000);
-
-        //resetAngle();
         motorLeft.setPower(0.0);
         motorRight.setPower(0.0);
 
         System.out.println("ValleyX about to back up from wall");
 
-        encoderDrive(speed, -4, -4, 3); /////////////////////////////////////////
+        encoderDrive(speed, -4, -4, 3);
 
         System.out.println("ValleyX backed up, about to turn right bc im a good legs");
 
         rotate(heading, 0.2, 1000);
 
-        //System.out.println("ValleyX trying rotate again");
-
-        //rotate((int)(-(globalAngle - rightAngle)), 0.1, 1000);
-
         System.out.println("ValleyX turned right like the perfect child i am");
 
-        //while (opModeIsActive());
         System.out.println("ValleyX after rotate angle= " + getAngle());
         System.out.println("ValleyX after rotate direction= " + checkDirection(rightAngle));
 
         goToPosition(topLift, topPot,0.4, 0.9); // 0.743
-        //resetAngle();
-        double straightPower = speed; ///////////////////////////////////////////////////////
-        double adjustPower = 0.1;
 
-        double wallDistance = 4.0;
-        double wallDistanceThresh = 0.25;
+        encoderDrive(speed, 40, 40, 10);
 
-       // encoderDriveImu(rightAngle, speed, 40, 10, false); /////////////////
-        //encoderDriveImu(rightAngle, 0.7, 40, 10, false); /////////////////
-        encoderDrive(speed, 40, 40, 10); ///////////////////////////////////////////////////////
-
-/*
-        //try
-        motorLeft.setPower(straightPower);
-        //motorRight.setPower(straightPower);
-
-        motorRight.setPower(straightPower-checkDirection(rightAngle));
-        idle();
-        while ((sensorRangeFront.getDistance(DistanceUnit.INCH) > 30.0) && opModeIsActive())
-        {
-            motorRight.setPower(straightPower-checkDirection(rightAngle));
-            idle();
-        }
-
-        motorLeft.setPower(0);
-        motorRight.setPower(0);
-*/
         intake.setPower(-0.6);
-        //runtime.reset();
         sleep(500);
-        //while (runtime.seconds() < 1.0 && opModeIsActive());
-        //intake.setPower(0.0);
 
         System.out.println("ValleyX: Go backwards");
 
@@ -585,14 +485,13 @@ public class Autonomous2844Crater extends LinearOpMode
 
         // wait for rotation to stop.
         sleep(delay);
-        //sleep(2);
 
 
         System.out.println("ValleyX in rotate after sleep angle= " + getAngle());
         System.out.println("ValleyX in rotate after sleep direction= " + checkDirection(rightAngle));
         if (!opModeIsActive())
         {
-            exit(0);
+            return;
         }
 
 
@@ -671,7 +570,7 @@ public class Autonomous2844Crater extends LinearOpMode
         }
         if (!opModeIsActive())
         {
-            exit(0);
+            return;
         }
 
     }
@@ -760,7 +659,7 @@ public class Autonomous2844Crater extends LinearOpMode
             sleep(1);   // optional pause after each move
             if (!opModeIsActive())
             {
-                exit(0);
+                return;
             }
 
         }
@@ -796,7 +695,7 @@ public class Autonomous2844Crater extends LinearOpMode
         }
         if (!opModeIsActive())
         {
-            exit(0);
+            return;
         }
 
     }

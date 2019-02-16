@@ -38,7 +38,9 @@ public class TeleOp2844 extends LinearOpMode
         motorLeft = hardwareMap.dcMotor.get("lmotor"); // main 1 motor
         motorRight = hardwareMap.dcMotor.get("rmotor"); // main 0 motor
         bottomLift = hardwareMap.dcMotor.get("blift"); // main 2 motor
+        bottomLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         topLift = hardwareMap.dcMotor.get("tlift"); // main 3 motor
+        topLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         intake = hardwareMap.dcMotor.get("intake"); // secondary 0 motor --> fix in wiring
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -161,17 +163,16 @@ public class TeleOp2844 extends LinearOpMode
                 System.out.println("ValleyX X button pressed");
                 motorLeft.setPower(0.0);
                 motorRight.setPower(0.0);
-                goToPosition(topLift, topPot, 1.97, 0.6); //////////////////////////mark this///
+                //goToPosition(topLift, topPot, 1.97, 0.6); //////////////////////////mark this///
+                goToPosition(topLift, topPot, 1.2, 0.6);
                 goToPosition(bottomLift, bottomPot, 3.3, -0.6);
-                goToPosition(topLift, topPot, topMax, 0.6);
             }
-
             if (gamepad2.a == true) // pressed
             {
                 // set bottom pot to drive back to landing position
-                goToPosition(bottomLift, bottomPot, 1.75, -0.6);
-                goToPosition(topLift, topPot, 2.44, 0.6);
-                goToPosition(bottomLift, bottomPot, 1.31, -0.6);
+                goToPosition(bottomLift, bottomPot, 1.2, -0.6); //1.75
+                goToPosition(topLift, topPot, 1.46, 0.6); //2.44
+                goToPosition(bottomLift, bottomPot, 1.2, -0.6);
                 // bottom to DBL position --> open
             }
 
@@ -182,8 +183,8 @@ public class TeleOp2844 extends LinearOpMode
                 motorLeft.setPower(0.0);
                 motorRight.setPower(0.0);
 
-                goToPosition(bottomLift, bottomPot, 1.26, -0.6);
-                goToPosition(topLift, topPot, 1.735, 0.6);
+                //goToPosition(bottomLift, bottomPot, 1.26, -0.6);
+                goToPosition(topLift, topPot, 1.0, 0.6);
 
                 /*
                 while (topPot.getVoltage() < topMax)

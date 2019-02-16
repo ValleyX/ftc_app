@@ -51,29 +51,19 @@ public class Autonomous2844Depot extends LinearOpMode
 
     private DigitalChannel digitalTouch;
 
-    //private DistanceSensor sensorRangeFront;
-
-    //private DistanceSensor sensorRangeFrontLeft;
-    //private DistanceSensor sensorRangeFrontRight;
-
-    //private DistanceSensor sensorRangeBack;
-    //private DistanceSensor sensorRangeLeft;
-    //private DistanceSensor sensorRangeRight;
-
-    boolean isDepot = true; /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////**
-
+    boolean isDepot = true;
     private int rightAngle;
     private int heading;
     private int driveExtra;
 
     // depot start
     static final int rightAngleDeopt = -90;
-    static final int headingDepot = -58;
+    static final int headingDepot = -58; //-58
 
     // crater start
    // static final int rightAngleCrater = 75;  //82
     static final int rightAngleCrater = 90;  //82
-    static final int headingCrater = 68;
+    static final int headingCrater = 58; //68
 
     static final int driveExtraDepot = 1;
     static final int driveExtraCrater = 7;
@@ -391,7 +381,7 @@ public class Autonomous2844Depot extends LinearOpMode
             //encoderDrive(1, 24, 24, 5);
             encoderDrive(speed, -16, -16, 5);////////////////////////////////////////////
             rotate(100, 0.2, rotateDelay);
-            encoderDrive(speed, 32+driveExtra, 32+driveExtra, 6);/////////////////////////////////////
+            encoderDrive(speed, 37+driveExtra, 37+driveExtra, 6);/////////////////////////////////////
             rotate(-30, 0.2, rotateDelay);
         }
 
@@ -445,8 +435,14 @@ public class Autonomous2844Depot extends LinearOpMode
 
        // encoderDriveImu(rightAngle, speed, 40, 10, false); /////////////////
         //encoderDriveImu(rightAngle, 0.7, 40, 10, false); /////////////////
-        encoderDrive(speed, 41, 41, 10); ///////////////////////////////////////////////////////
-
+        if (foundRot == FoundRotationLocation.RIGHT)
+        {
+            encoderDrive(speed, 44, 44, 10); ///////////////////////////////////////////////////////
+        }
+        else
+        {
+            encoderDrive(speed, 41, 41, 10); ///////////////////////////////////////////////////////
+        }
 /*
         //try
         motorLeft.setPower(straightPower);
@@ -603,7 +599,7 @@ public class Autonomous2844Depot extends LinearOpMode
 
         if (!opModeIsActive())
         {
-            exit(0);
+            return;
         }
 
         // wait for rotation to stop.
@@ -690,7 +686,7 @@ public class Autonomous2844Depot extends LinearOpMode
         }
         if (!opModeIsActive())
         {
-            exit(0);
+            return;
         }
 
     }
@@ -779,7 +775,7 @@ public class Autonomous2844Depot extends LinearOpMode
             sleep(1);   // optional pause after each move
             if (!opModeIsActive())
             {
-                exit(0);
+                return;
             }
 
         }
@@ -815,7 +811,7 @@ public class Autonomous2844Depot extends LinearOpMode
         }
         if (!opModeIsActive())
         {
-            exit(0);
+            return;
         }
 
     }
