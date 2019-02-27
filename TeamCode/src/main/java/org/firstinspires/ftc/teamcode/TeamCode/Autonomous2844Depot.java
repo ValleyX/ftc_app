@@ -4,6 +4,7 @@ import com.disnodeteam.dogecv.CameraViewDisplay;
 import com.disnodeteam.dogecv.DogeCV;
 import com.disnodeteam.dogecv.detectors.roverrukus.GoldAlignDetector;
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.AnalogInput;
@@ -45,6 +46,7 @@ public class Autonomous2844Depot extends LinearOpMode
     private AnalogInput bottomPot;
     private AnalogInput topPot;
 
+    private RevBlinkinLedDriver led;
 
     private DigitalChannel digitalTouch;
 
@@ -134,6 +136,8 @@ public class Autonomous2844Depot extends LinearOpMode
 
         digitalTouch = hardwareMap.get(DigitalChannel.class, "touch"); // secondary 0 digital device
         digitalTouch.setMode(DigitalChannel.Mode.INPUT);
+
+        led = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
 
         motorLeft.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         motorRight.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
@@ -277,6 +281,7 @@ public class Autonomous2844Depot extends LinearOpMode
                 System.out.println("ValleyX: found right value " + detector.getXPosition());
                 rotate(-15, 0.3, rotateDelay);
                 encoderDrive(speed, 32, 32, 5);
+                led.setPattern(RevBlinkinLedDriver.BlinkinPattern.GOLD);
             }
             else
             {
@@ -284,6 +289,7 @@ public class Autonomous2844Depot extends LinearOpMode
                 System.out.println("ValleyX: gold is found middle");
                 System.out.println("ValleyX: found middle value " + detector.getXPosition());
                 encoderDrive(speed, 27, 27, 5);
+                led.setPattern(RevBlinkinLedDriver.BlinkinPattern.GOLD);
             }
         }
         else
@@ -293,6 +299,7 @@ public class Autonomous2844Depot extends LinearOpMode
             System.out.println("ValleyX: found left value " + detector.getXPosition());
             rotate(15, 0.3, rotateDelay);
             encoderDrive(speed, 32, 32, 5);
+            led.setPattern(RevBlinkinLedDriver.BlinkinPattern.GOLD);
         }
 
 
@@ -370,16 +377,19 @@ public class Autonomous2844Depot extends LinearOpMode
         intake.setPower(-0.6);
         sleep(1000);
 
+        led.setPattern(RevBlinkinLedDriver.BlinkinPattern.DARK_BLUE);
+
         System.out.println("ValleyX: Go backwards");
 
         if (!isDepot)
         {
             rightAngle = 90;
         }
+
+        led.setPattern(RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE);
+
         // driving backwards
         encoderDriveImu(rightAngle, speed, -72, 10, false);
-
-        // rainbow -0.99 as a servo
 
         System.out.println("ValleyX: ending");
     }

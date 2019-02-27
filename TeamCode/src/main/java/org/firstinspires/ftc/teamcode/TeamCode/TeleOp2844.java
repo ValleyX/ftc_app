@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.TeamCode;
 
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.AnalogInput;
@@ -26,11 +27,14 @@ public class TeleOp2844 extends LinearOpMode
 
     private Servo hangingServo;
     private Servo lockServo;
+    private RevBlinkinLedDriver led;
+
 
     double topMax = 1.946;
     double topClosed = 0.001;
     double bottomClosed = 0.6;
     private ElapsedTime runtime = new ElapsedTime();
+    private ElapsedTime gameruntime = new ElapsedTime();
 
     @Override
     public void runOpMode() throws InterruptedException
@@ -50,6 +54,8 @@ public class TeleOp2844 extends LinearOpMode
         digitalTouch = hardwareMap.get(DigitalChannel.class, "touch"); // secondary 0 digital device
         digitalTouch.setMode(DigitalChannel.Mode.INPUT);
 
+        led = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
+
         bottomPot = hardwareMap.analogInput.get("bottomPot"); // main 0 analog input
         topPot = hardwareMap.analogInput.get("topPot"); // main 2 analog input
 
@@ -67,7 +73,7 @@ public class TeleOp2844 extends LinearOpMode
 
         System.out.println("ValleyX waiting for start");
         waitForStart();
-
+        gameruntime.reset();
         System.out.println("ValleyX started");
 
         while (opModeIsActive())
@@ -78,8 +84,26 @@ public class TeleOp2844 extends LinearOpMode
             gamepad2RightStickY = gamepad2.right_stick_y;
             gamepad1LeftTrigger = gamepad1.left_trigger;
 
+            telemetry.addData("Status", "Run Time: " + gameruntime.toString());
             telemetry.addData("gp1", "  leftY=" + gamepad1LeftStickY + "  rightY=" + gamepad1RightStickY);
             telemetry.addData("gp2", "  leftY=" + gamepad2LeftStickY + "  rightY=" + gamepad2RightStickY);
+
+            if (gameruntime.seconds() > 115)
+            {
+                led.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
+            }
+            else if (gameruntime.seconds() > 106)
+            {
+                led.setPattern(RevBlinkinLedDriver.BlinkinPattern.YELLOW);
+            }
+            else if (gameruntime.seconds() > 96)
+            {
+                led.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
+            }
+            else if (gameruntime.seconds() > 91)
+            {
+                led.setPattern(RevBlinkinLedDriver.BlinkinPattern.STROBE_RED);
+            }
 
             // gamepad1
             motorLeft.setPower(-gamepad1RightStickY);
@@ -176,6 +200,10 @@ public class TeleOp2844 extends LinearOpMode
             //gamepad2
             if (gamepad2.x == true) // pressed
             {
+                if (gameruntime.seconds() < 91)
+                {
+                    led.setPattern(RevBlinkinLedDriver.BlinkinPattern.DARK_BLUE);
+                }
                 // move bottom lift to intake pos
                 System.out.println("ValleyX X button pressed");
                 motorLeft.setPower(0.0);
@@ -183,18 +211,34 @@ public class TeleOp2844 extends LinearOpMode
                 //goToPosition(topLift, topPot, 1.97, 0.6); //////////////////////////mark this///
                 goToPosition(topLift, topPot, 1.2, 0.6);
                 goToPosition(bottomLift, bottomPot, 3.3, -0.6);
+                if (gameruntime.seconds() < 91)
+                {
+                    led.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_END_TO_END_BLEND_1_TO_2);
+                }
             }
             if (gamepad2.a == true) // pressed
             {
+                if (gameruntime.seconds() < 91)
+                {
+                    led.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
+                }
                 // set bottom pot to drive back to landing position
                 goToPosition(bottomLift, bottomPot, 1.2, -0.6); //1.75
                 goToPosition(topLift, topPot, 1.46, 0.6); //2.44
                 goToPosition(bottomLift, bottomPot, 1.2, -0.6);
                 // bottom to DBL position --> open
+                if (gameruntime.seconds() < 91)
+                {
+                    led.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_END_TO_END_BLEND_1_TO_2);
+                }
             }
 
             if (gamepad2.b == true) // pressed
             {
+                if (gameruntime.seconds() < 91)
+                {
+                    led.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED_ORANGE);
+                }
                 // move bottom lift to unloading pos
                 System.out.println("ValleyX B button pressed");
                 motorLeft.setPower(0.0);
@@ -202,6 +246,10 @@ public class TeleOp2844 extends LinearOpMode
 
                 goToPosition(bottomLift, bottomPot, 1.2, -0.6);
                 goToPosition(topLift, topPot, 1.04, 0.6); //1.0
+                if (gameruntime.seconds() < 91)
+                {
+                    led.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_END_TO_END_BLEND_1_TO_2);
+                }
             }
 
             if (gamepad2.right_bumper == true) // motor for intake --> in

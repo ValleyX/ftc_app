@@ -4,6 +4,7 @@ import com.disnodeteam.dogecv.CameraViewDisplay;
 import com.disnodeteam.dogecv.DogeCV;
 import com.disnodeteam.dogecv.detectors.roverrukus.GoldAlignDetector;
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.AnalogInput;
@@ -40,7 +41,8 @@ public class Autonomous2844Crater extends LinearOpMode
 
     private Servo hangingServo;
     private Servo lockServo;
-    private Servo led;
+    //private Servo led;
+    private RevBlinkinLedDriver led;
 
     private AnalogInput bottomPot;
     private AnalogInput topPot;
@@ -117,6 +119,7 @@ public class Autonomous2844Crater extends LinearOpMode
         lockServo = hardwareMap.servo.get("lockServo"); // secondary 0 servo
 
         //led = hardwareMap.servo.get("ledservo"); // main 1 servo
+        led = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
 
         bottomPot = hardwareMap.analogInput.get("bottomPot"); // main 0 analog input
         topPot = hardwareMap.analogInput.get("topPot"); // main 2 analog input
@@ -179,8 +182,6 @@ public class Autonomous2844Crater extends LinearOpMode
         // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
         // and named "imu".
         imu = hardwareMap.get(BNO055IMU.class, "imu");
-
-        //led.setPosition(0.57); /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         System.out.println("ValleyX: Waiting for Start");
 
@@ -266,6 +267,7 @@ public class Autonomous2844Crater extends LinearOpMode
                 System.out.println("ValleyX: found right value " + detector.getXPosition());
                 rotate(-15, 0.3, rotateDelay);
                 encoderDrive(speed, 32, 32, 5);
+                led.setPattern(RevBlinkinLedDriver.BlinkinPattern.GOLD);
             }
             else
             {
@@ -273,6 +275,7 @@ public class Autonomous2844Crater extends LinearOpMode
                 System.out.println("ValleyX: gold is found middle");
                 System.out.println("ValleyX: found middle value " + detector.getXPosition());
                 encoderDrive(speed, 27, 27, 5);
+                led.setPattern(RevBlinkinLedDriver.BlinkinPattern.GOLD);
             }
         }
         else
@@ -282,6 +285,7 @@ public class Autonomous2844Crater extends LinearOpMode
             System.out.println("ValleyX: found left value " + detector.getXPosition());
             rotate(15, 0.3, rotateDelay);
             encoderDrive(speed, 32, 32, 5);
+            led.setPattern(RevBlinkinLedDriver.BlinkinPattern.GOLD);
         }
 
 
@@ -348,16 +352,23 @@ public class Autonomous2844Crater extends LinearOpMode
         intake.setPower(-0.6);
         sleep(1000);
 
+        led.setPattern(RevBlinkinLedDriver.BlinkinPattern.DARK_BLUE);
+
+
         System.out.println("ValleyX: Go backwards");
 
         if (!isDepot)
         {
             rightAngle = 90;
         }
+
+        led.setPattern(RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE);
+
         // driving backwards
         encoderDriveImu(rightAngle, speed, -71, 10, false);
 
-        // rainbow -0.99 as a servo
+        // rainbow -0.99
+        //led.setPosition(-0.99);
 
         System.out.println("ValleyX: ending");
     }
