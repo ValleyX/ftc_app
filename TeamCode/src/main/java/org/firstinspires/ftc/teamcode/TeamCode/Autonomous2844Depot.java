@@ -10,7 +10,6 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -42,11 +41,12 @@ public class Autonomous2844Depot extends LinearOpMode
 
     private Servo hangingServo;
     private Servo lockServo;
+    //private Servo led;
+    private RevBlinkinLedDriver led;
 
     private AnalogInput bottomPot;
     private AnalogInput topPot;
 
-    private RevBlinkinLedDriver led;
 
     private DigitalChannel digitalTouch;
 
@@ -57,13 +57,13 @@ public class Autonomous2844Depot extends LinearOpMode
 
     // depot start
     static final int rightAngleDeopt = -90;
-    static final int headingDepot = -55;
+    static final int headingDepot = -85;
 
     // crater start
     static final int rightAngleCrater = 90;
-    static final int headingCrater = 58;
+    static final int headingCrater = 85;
 
-    static final int driveExtraDepot = 4;
+    static final int driveExtraDepot = 7;
     static final int driveExtraCrater = 7;
 
     static final int rotateDelay = 100;
@@ -87,20 +87,7 @@ public class Autonomous2844Depot extends LinearOpMode
 
     FoundRotationLocation foundRot = FoundRotationLocation.STRAIGHT; // default to straight
 
-    // initial aligned x and y dimentions
-    int goldDetectorLeftX = 260;
-    int goldDetectorRightX = 320;
-
-    // final aligned x and y dementions --> moved over because of phone position
-    static final int goldIsFoundLeftX = 70;
-    static final int goldIsFoundRightX = 530;
-
     //converts degrees to inches for the given bot
-    public double degToInches (double degrees)
-    {
-        return (((1.0/360.0)* degrees) * CIRCUMFERENCE);
-
-    }
 
     @Override
     public void runOpMode() throws InterruptedException
@@ -131,13 +118,14 @@ public class Autonomous2844Depot extends LinearOpMode
         hangingServo = hardwareMap.servo.get("hservo"); // main 0 servo
         lockServo = hardwareMap.servo.get("lockServo"); // secondary 0 servo
 
+        //led = hardwareMap.servo.get("ledservo"); // main 1 servo
+        led = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
+
         bottomPot = hardwareMap.analogInput.get("bottomPot"); // main 0 analog input
         topPot = hardwareMap.analogInput.get("topPot"); // main 2 analog input
 
         digitalTouch = hardwareMap.get(DigitalChannel.class, "touch"); // secondary 0 digital device
         digitalTouch.setMode(DigitalChannel.Mode.INPUT);
-
-        led = hardwareMap.get(RevBlinkinLedDriver.class, "blinkin");
 
         motorLeft.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         motorRight.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
@@ -155,7 +143,7 @@ public class Autonomous2844Depot extends LinearOpMode
         detector.downscale = 0.4;
 
         detector.SetRequestedYLine(330); //enhancement to doge detector to only consider scoring
-                                            //matches >= the Y line
+        //matches >= the Y line
 //365
         detector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA;
 
@@ -212,10 +200,7 @@ public class Autonomous2844Depot extends LinearOpMode
         sleep(100);
         bottomLift.setPower(0.0);
 
-
-
         goToPosition(bottomLift, bottomPot,1.401, -0.6);
-
 
         /* ---new remapping code --*/
         //swapping y & z axis due to vertical mounting of rev expansion board
@@ -241,10 +226,11 @@ public class Autonomous2844Depot extends LinearOpMode
         sleep(100); //Changing modes again requires a delay
         /* ---new remapping code ---*/
 
+
         hangingServo.setPosition(1.0); // release servo
         sleep(1000); // break in between to give time for servo to release
 
-        while ((bottomPot.getVoltage() > 1.0) && (digitalTouch.getState() == true) && (opModeIsActive())) // lower arm down w/o touch sensor
+        while ((bottomPot.getVoltage() > 1.0) && (digitalTouch.getState() == true)) // lower arm down w/o touch sensor
         {
             bottomLift.setPower(0.9); // turn on motor
         }
@@ -262,8 +248,10 @@ public class Autonomous2844Depot extends LinearOpMode
             idle();
         }
         if (!imu.isGyroCalibrated()) {
-          System.out.println("Gyro not calibrated");
+            System.out.println("ValleyX: Gyro not calibrated");
         }
+
+        System.out.println("ValleyX: imu calib status" + imu.getCalibrationStatus().toString());
 
         telemetry.addData("Mode", "calibrated");
         telemetry.update();
@@ -312,7 +300,6 @@ public class Autonomous2844Depot extends LinearOpMode
         if (foundRot == FoundRotationLocation.LEFT)
         {
             System.out.println("ValleyX found left");
-            //encoderDrive(1, 22, 22, 5);
             encoderDrive(speed, -14, -14, 5);
             rotate(45, 0.2, rotateDelay);
             encoderDrive(speed, 15+driveExtra, 15+driveExtra, 6);
@@ -322,20 +309,18 @@ public class Autonomous2844Depot extends LinearOpMode
         if (foundRot == FoundRotationLocation.STRAIGHT)
         {
             System.out.println("ValleyX found straight");
-            //encoderDrive(1, 20, 20, 5);
             encoderDrive(speed, -14, -14, 5);
             rotate(70, 0.2, rotateDelay);
-            encoderDrive(speed, 26+driveExtra, 26+driveExtra, 6);
+            encoderDrive(speed, 22+driveExtra, 22+driveExtra, 6);
             rotate(-30, 0.2, rotateDelay);
         }
 
         if (foundRot == FoundRotationLocation.RIGHT)
         {
             System.out.println("ValleyX found right");
-            //encoderDrive(1, 24, 24, 5);
-            encoderDrive(speed, -16, -16, 5);
+            encoderDrive(speed, -14, -14, 5);
             rotate(100, 0.2, rotateDelay);
-            encoderDrive(speed, 37+driveExtra, 37+driveExtra, 6);
+            encoderDrive(speed, 36+driveExtra, 36+driveExtra, 6);
             rotate(-30, 0.2, rotateDelay);
         }
 
@@ -344,65 +329,75 @@ public class Autonomous2844Depot extends LinearOpMode
         motorRight.setPower(speed);
 
         // drive rest of way up to wall
-        encoderDrive(speed, 14, 14, 0.75);
+        encoderDrive(speed, 15, 15, 0.75);
 
         motorLeft.setPower(0.0);
         motorRight.setPower(0.0);
 
         System.out.println("ValleyX about to back up from wall");
 
-        encoderDrive(speed, -4, -4, 3);
+        encoderDrive(speed, -3, -3, 3);
+        sleep(100); //allow IMU to settle before marking
+        resetAngle();
 
         System.out.println("ValleyX backed up, about to turn right bc im a good legs");
 
-        rotate(heading, 0.2, 1000);
+        //rotate(heading, 0.2, 1000);
+        rotatePrecise(heading,2,0.2,0.3,10);
 
         System.out.println("ValleyX turned right like the perfect child i am");
 
-        //while (opModeIsActive());
         System.out.println("ValleyX after rotate angle= " + getAngle());
         System.out.println("ValleyX after rotate direction= " + checkDirection(rightAngle));
 
         goToPosition(topLift, topPot,0.5, 0.9);
-
-        if (foundRot == FoundRotationLocation.RIGHT)
+/*
+        //reset to true right angle
+        if (!isDepot)
         {
-            encoderDrive(speed, 44, 44, 10);
+            rightAngle = 90;
         }
         else
         {
-            encoderDrive(speed, 41, 41, 10);
+            rightAngle = -90;
         }
+*/
+        //consider using encoder drive imu here at 0.8 speed
+        encoderDrive(speed, 37, 37, 10);
+        //encoderDriveImu(rightAngle, 0.8, 37, 10, false);
+
 
         intake.setPower(-0.6);
         sleep(1000);
 
         led.setPattern(RevBlinkinLedDriver.BlinkinPattern.DARK_BLUE);
 
+
         System.out.println("ValleyX: Go backwards");
 
-        if (!isDepot)
-        {
-            rightAngle = 90;
-        }
 
         led.setPattern(RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE);
 
         // driving backwards
-        encoderDriveImu(rightAngle, speed, -72, 10, false);
+        encoderDriveImu(rightAngle, 0.8, -71, 10, false);
+        //   encoderDrive(speed, -71, -71, 10);
+
+        //another color for crater points?
+
+        //consider lowing arm to load position
 
         System.out.println("ValleyX: ending");
     }
 
-        /**
+    /**
      * Resets the cumulative angle tracking to zero.
      */
-        private void resetAngle()
-        {
-            lastAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES); // records what the last angle read is
-            resetMark = lastAngles;
-            globalAngle = 0; // direction you are pointing at rn (straight)
-        }
+    private void resetAngle()
+    {
+        lastAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES); // records what the last angle read is
+        resetMark = lastAngles;
+        globalAngle = 0; // direction you are pointing at rn (straight)
+    }
 
     /**
      * Get current cumulative angle rotation from last reset.
@@ -494,7 +489,7 @@ public class Autonomous2844Depot extends LinearOpMode
         if (degrees < 0)
         {
             // On right turn we have to get off zero first.
-            while (opModeIsActive() && getAngle() == 0) { idle(); }
+            while (opModeIsActive() && getAngle() == 0) { idle();}
 
             while (opModeIsActive() && getAngle() > degrees) { idle();}
         }
@@ -506,16 +501,67 @@ public class Autonomous2844Depot extends LinearOpMode
         motorRight.setPower(0);
         motorRight.setPower(0);
 
+
+        // wait for rotation to stop.
+        sleep(delay);
+
         if (!opModeIsActive())
         {
             return;
         }
 
-        // wait for rotation to stop.
-        sleep(delay);
-
-
     }
+
+    /**
+     * @param gyroTarget The target heading in degrees, between 0 and 360
+     * @param gyroRange The acceptable range off target in degrees, usually 1 or 2
+     * @param minSpeed The minimum power to apply in order to turn (e.g. 0.05 when moving or 0.15 when stopped)
+     * @param addSpeed The maximum additional speed to apply in order to turn (proportional component), e.g. 0.3
+     * @param timesCorrect how many times in a row does it need to be perfect before ending
+     */
+    public void rotatePrecise(double gyroTarget, double gyroRange, double minSpeed, double addSpeed, int timesCorrect) {
+        double turnPower = 0;
+        double gyroActual = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+        gyroTarget += gyroActual + 360.0;
+        gyroTarget %= 360;
+        int correctCount = 0;
+
+        while (correctCount < timesCorrect)
+        {
+            gyroActual = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+            double delta = (gyroTarget - gyroActual + 360.0) % 360.0; //the difference between target and actual mod 360
+
+            if (delta > 180.0) delta -= 360.0; //makes delta between -180 and 180
+            if (Math.abs(delta) > gyroRange) { //checks if delta is out of range
+                correctCount = 0;
+                double gyroMod = delta / 45.0; //scale from -1 to 1 if delta is less than 45 degrees
+                if (Math.abs(gyroMod) > 1.0)
+                    gyroMod = Math.signum(gyroMod); //set gyromod to 1 or -1 if the error is more than 45 degrees
+                turnPower = minSpeed * Math.signum(gyroMod) + addSpeed * gyroMod;
+            } else {
+                correctCount++;
+                turnPower = 0;
+            }
+            double  leftPower, rightPower;
+            if (gyroTarget < 0)
+            {   // turn right
+                leftPower = -turnPower;
+                rightPower = turnPower;
+            }
+            else
+            {   // turn left
+                leftPower = turnPower;
+                rightPower = -turnPower;
+            }
+
+            // set power to rotate.
+            motorLeft.setPower(leftPower);
+            motorRight.setPower(rightPower);
+
+        }
+        //   return this.correctCount;
+    }
+
     /*
      *  Method to perform a relative move, based on encoder counts.
      *  Encoders are not reset as the move is based on the current position.

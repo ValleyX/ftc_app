@@ -63,7 +63,7 @@ public class Autonomous2844Crater extends LinearOpMode
     static final int rightAngleCrater = 90;
     static final int headingCrater = 85;
 
-    static final int driveExtraDepot = 0;
+    static final int driveExtraDepot = 7;
     static final int driveExtraCrater = 7;
 
     static final int rotateDelay = 100;
