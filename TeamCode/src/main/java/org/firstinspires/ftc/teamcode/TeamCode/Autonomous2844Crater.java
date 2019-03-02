@@ -57,11 +57,11 @@ public class Autonomous2844Crater extends LinearOpMode
 
     // depot start
     static final int rightAngleDeopt = -90;
-    static final int headingDepot = -62;
+    static final int headingDepot = -85;
 
     // crater start
     static final int rightAngleCrater = 90;
-    static final int headingCrater = 58;
+    static final int headingCrater = 85;
 
     static final int driveExtraDepot = 0;
     static final int driveExtraCrater = 7;
@@ -248,8 +248,10 @@ public class Autonomous2844Crater extends LinearOpMode
             idle();
         }
         if (!imu.isGyroCalibrated()) {
-          System.out.println("Gyro not calibrated");
+          System.out.println("ValleyX: Gyro not calibrated");
         }
+
+        System.out.println("ValleyX: imu calib status" + imu.getCalibrationStatus().toString());
 
         telemetry.addData("Mode", "calibrated");
         telemetry.update();
@@ -327,18 +329,21 @@ public class Autonomous2844Crater extends LinearOpMode
         motorRight.setPower(speed);
 
         // drive rest of way up to wall
-        encoderDrive(speed, 14, 14, 0.75);
+        encoderDrive(speed, 15, 15, 0.75);
 
         motorLeft.setPower(0.0);
         motorRight.setPower(0.0);
 
         System.out.println("ValleyX about to back up from wall");
 
-        encoderDrive(speed, -4, -4, 3);
+        encoderDrive(speed, -3, -3, 3);
+        sleep(100); //allow IMU to settle before marking
+        resetAngle();
 
         System.out.println("ValleyX backed up, about to turn right bc im a good legs");
 
-        rotate(heading, 0.2, 1000);
+        //rotate(heading, 0.2, 1000);
+        rotatePrecise(heading,2,0.2,0.3,10);
 
         System.out.println("ValleyX turned right like the perfect child i am");
 
@@ -346,8 +351,21 @@ public class Autonomous2844Crater extends LinearOpMode
         System.out.println("ValleyX after rotate direction= " + checkDirection(rightAngle));
 
         goToPosition(topLift, topPot,0.5, 0.9);
-
+/*
+        //reset to true right angle
+        if (!isDepot)
+        {
+            rightAngle = 90;
+        }
+        else
+        {
+            rightAngle = -90;
+        }
+*/
+        //consider using encoder drive imu here at 0.8 speed
         encoderDrive(speed, 37, 37, 10);
+        //encoderDriveImu(rightAngle, 0.8, 37, 10, false);
+
 
         intake.setPower(-0.6);
         sleep(1000);
@@ -357,18 +375,16 @@ public class Autonomous2844Crater extends LinearOpMode
 
         System.out.println("ValleyX: Go backwards");
 
-        if (!isDepot)
-        {
-            rightAngle = 90;
-        }
 
         led.setPattern(RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE);
 
         // driving backwards
-        encoderDriveImu(rightAngle, speed, -71, 10, false);
+        encoderDriveImu(rightAngle, 0.8, -71, 10, false);
+     //   encoderDrive(speed, -71, -71, 10);
 
-        // rainbow -0.99
-        //led.setPosition(-0.99);
+        //another color for crater points?
+
+        //consider lowing arm to load position
 
         System.out.println("ValleyX: ending");
     }
@@ -495,7 +511,58 @@ public class Autonomous2844Crater extends LinearOpMode
         }
 
     }
-    /*
+
+    /**
+     * @param gyroTarget The target heading in degrees, between 0 and 360
+     * @param gyroRange The acceptable range off target in degrees, usually 1 or 2
+     * @param minSpeed The minimum power to apply in order to turn (e.g. 0.05 when moving or 0.15 when stopped)
+     * @param addSpeed The maximum additional speed to apply in order to turn (proportional component), e.g. 0.3
+     * @param timesCorrect how many times in a row does it need to be perfect before ending
+     */
+    public void rotatePrecise(double gyroTarget, double gyroRange, double minSpeed, double addSpeed, int timesCorrect) {
+        double turnPower = 0;
+        double gyroActual = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+        gyroTarget += gyroActual + 360.0;
+        gyroTarget %= 360;
+        int correctCount = 0;
+
+        while (correctCount < timesCorrect)
+        {
+            gyroActual = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+            double delta = (gyroTarget - gyroActual + 360.0) % 360.0; //the difference between target and actual mod 360
+
+            if (delta > 180.0) delta -= 360.0; //makes delta between -180 and 180
+            if (Math.abs(delta) > gyroRange) { //checks if delta is out of range
+               correctCount = 0;
+               double gyroMod = delta / 45.0; //scale from -1 to 1 if delta is less than 45 degrees
+               if (Math.abs(gyroMod) > 1.0)
+                  gyroMod = Math.signum(gyroMod); //set gyromod to 1 or -1 if the error is more than 45 degrees
+               turnPower = minSpeed * Math.signum(gyroMod) + addSpeed * gyroMod;
+            } else {
+              correctCount++;
+              turnPower = 0;
+            }
+            double  leftPower, rightPower;
+            if (gyroTarget < 0)
+            {   // turn right
+                leftPower = -turnPower;
+                rightPower = turnPower;
+            }
+            else
+            {   // turn left
+                leftPower = turnPower;
+                rightPower = -turnPower;
+            }
+
+            // set power to rotate.
+            motorLeft.setPower(leftPower);
+            motorRight.setPower(rightPower);
+
+        }
+        //   return this.correctCount;
+    }
+
+        /*
      *  Method to perform a relative move, based on encoder counts.
      *  Encoders are not reset as the move is based on the current position.
      *  Move will stop if any of three conditions occur:
