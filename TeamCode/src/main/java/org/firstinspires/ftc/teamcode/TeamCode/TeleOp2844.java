@@ -31,8 +31,8 @@ public class TeleOp2844 extends LinearOpMode
 
 
     double topMax = 1.946;
-    double topClosed = 0.001;
-    double bottomClosed = 0.6;
+    double topClosed = 0.3;
+    double bottomClosed = 0.54; //0.6
     private ElapsedTime runtime = new ElapsedTime();
     private ElapsedTime gameruntime = new ElapsedTime();
 
@@ -209,8 +209,10 @@ public class TeleOp2844 extends LinearOpMode
                 motorLeft.setPower(0.0);
                 motorRight.setPower(0.0);
                 //goToPosition(topLift, topPot, 1.97, 0.6); //////////////////////////mark this///
-                goToPosition(topLift, topPot, 1.2, 0.6);
-                goToPosition(bottomLift, bottomPot, 3.3, -0.6);
+                System.out.println("ValleyX bottom");
+                goToPosition(bottomLift, bottomPot, 3.3, -1.0);
+                System.out.println("ValleyX top");
+                goToPosition(topLift, topPot, 1.7, 1.0);
                 if (gameruntime.seconds() < 91)
                 {
                     led.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_END_TO_END_BLEND_1_TO_2);
@@ -218,14 +220,19 @@ public class TeleOp2844 extends LinearOpMode
             }
             if (gamepad2.a == true) // pressed
             {
+                System.out.println("ValleyX A button pressed");
+
                 if (gameruntime.seconds() < 91)
                 {
                     led.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
                 }
                 // set bottom pot to drive back to landing position
-                goToPosition(bottomLift, bottomPot, 1.2, -0.6); //1.75
-                goToPosition(topLift, topPot, 1.46, 0.6); //2.44
-                goToPosition(bottomLift, bottomPot, 1.2, -0.6);
+                System.out.println("ValleyX bottom");
+                goToPosition(bottomLift, bottomPot, 1.6, -1.0); //1.75
+                System.out.println("ValleyX top");
+                goToPosition(topLift, topPot, 2.4, 0.6); //1.46
+                System.out.println("ValleyX bottom");
+                goToPosition(bottomLift, bottomPot, 1.2, -1.0);
                 // bottom to DBL position --> open
                 if (gameruntime.seconds() < 91)
                 {
@@ -244,8 +251,10 @@ public class TeleOp2844 extends LinearOpMode
                 motorLeft.setPower(0.0);
                 motorRight.setPower(0.0);
 
-                goToPosition(bottomLift, bottomPot, 1.2, -0.6);
-                goToPosition(topLift, topPot, 1.04, 0.6); //1.0
+                System.out.println("ValleyX bottom");
+                goToPosition(bottomLift, bottomPot, 1.28, -1.0); //1.2 1.118
+                System.out.println("ValleyX top");
+                goToPosition(topLift, topPot, 1.619, 1.0); //1.04 1.119
                 if (gameruntime.seconds() < 91)
                 {
                     led.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_END_TO_END_BLEND_1_TO_2);
@@ -299,6 +308,8 @@ public class TeleOp2844 extends LinearOpMode
     {
         double timeoutS = 4.0;
         runtime.reset();
+        System.out.println("ValleyX voltage " + pot.getVoltage() + "requested position " + position);
+
         if (pot.getVoltage() < position)
         {
             lift.setPower(power);

@@ -23,6 +23,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 public class Autonomous2844Depot extends LinearOpMode
 {
     private ElapsedTime runtime = new ElapsedTime();
+    private ElapsedTime gameruntime = new ElapsedTime();
 
     BNO055IMU imu;
     Orientation lastAngles = new Orientation();
@@ -113,7 +114,6 @@ public class Autonomous2844Depot extends LinearOpMode
 
         intake = hardwareMap.dcMotor.get("intake"); // secondary 0 motor
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        intake.setDirection(DcMotor.Direction.REVERSE);
 
         hangingServo = hardwareMap.servo.get("hservo"); // main 0 servo
         lockServo = hardwareMap.servo.get("lockServo"); // secondary 0 servo
@@ -191,6 +191,7 @@ public class Autonomous2844Depot extends LinearOpMode
         lockServo.setPosition(1.0);
 
         waitForStart();
+        gameruntime.reset();
 
         System.out.println("ValleyX: Starting .... ");
 
@@ -230,7 +231,7 @@ public class Autonomous2844Depot extends LinearOpMode
         hangingServo.setPosition(1.0); // release servo
         sleep(1000); // break in between to give time for servo to release
 
-        while ((bottomPot.getVoltage() > 1.0) && (digitalTouch.getState() == true)) // lower arm down w/o touch sensor
+        while ((bottomPot.getVoltage() > 1.0) && (digitalTouch.getState() == true) && opModeIsActive()) // lower arm down w/o touch sensor
         {
             bottomLift.setPower(0.9); // turn on motor
         }
@@ -256,6 +257,9 @@ public class Autonomous2844Depot extends LinearOpMode
         telemetry.addData("Mode", "calibrated");
         telemetry.update();
 
+        encoderDrive(0.5,-2,-2,2);
+
+        //while (opModeIsActive());
         ///////////////////////////////////////////////////////GOLD DETECTOR START////////////////////////////////////////////////////
         double speed = 1.0;
         int middleValue = 300;
@@ -267,7 +271,9 @@ public class Autonomous2844Depot extends LinearOpMode
                 foundRot = FoundRotationLocation.RIGHT;
                 System.out.println("ValleyX: gold is found right");
                 System.out.println("ValleyX: found right value " + detector.getXPosition());
-                rotate(-15, 0.3, rotateDelay);
+                //rotate(-17, 0.3, rotateDelay);
+                resetAngle();
+                rotatePrecise(-25,1,0.2,0.3,5);
                 encoderDrive(speed, 32, 32, 5);
                 led.setPattern(RevBlinkinLedDriver.BlinkinPattern.GOLD);
             }
@@ -285,7 +291,9 @@ public class Autonomous2844Depot extends LinearOpMode
             foundRot = FoundRotationLocation.LEFT;
             System.out.println("ValleyX: gold is found left");
             System.out.println("ValleyX: found left value " + detector.getXPosition());
-            rotate(15, 0.3, rotateDelay);
+            //rotate(17, 0.3, rotateDelay);
+            resetAngle();
+            rotatePrecise(25,1,0.2,0.3,5);
             encoderDrive(speed, 32, 32, 5);
             led.setPattern(RevBlinkinLedDriver.BlinkinPattern.GOLD);
         }
@@ -329,7 +337,7 @@ public class Autonomous2844Depot extends LinearOpMode
         motorRight.setPower(speed);
 
         // drive rest of way up to wall
-        encoderDrive(speed, 15, 15, 0.75);
+        encoderDrive(speed, 17, 17, 0.75);
 
         motorLeft.setPower(0.0);
         motorRight.setPower(0.0);
@@ -350,7 +358,7 @@ public class Autonomous2844Depot extends LinearOpMode
         System.out.println("ValleyX after rotate angle= " + getAngle());
         System.out.println("ValleyX after rotate direction= " + checkDirection(rightAngle));
 
-        goToPosition(topLift, topPot,0.5, 0.9);
+        goToPosition(topLift, topPot,0.9, 0.9);
 /*
         //reset to true right angle
         if (!isDepot)
@@ -367,7 +375,7 @@ public class Autonomous2844Depot extends LinearOpMode
         //encoderDriveImu(rightAngle, 0.8, 37, 10, false);
 
 
-        intake.setPower(-0.6);
+        intake.setPower(-0.9);
         sleep(1000);
 
         led.setPattern(RevBlinkinLedDriver.BlinkinPattern.DARK_BLUE);
@@ -379,12 +387,19 @@ public class Autonomous2844Depot extends LinearOpMode
         led.setPattern(RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE);
 
         // driving backwards
-        encoderDriveImu(rightAngle, 0.8, -71, 10, false);
+        encoderDriveImu(rightAngle, 0.9, -71, 10, false);
         //   encoderDrive(speed, -71, -71, 10);
 
         //another color for crater points?
 
-        //consider lowing arm to load position
+        //lower arm to ensure parking in crater
+        goToPosition(topLift, topPot, 1.7, 1.0);
+        System.out.println("ValleyX bottom");
+        goToPosition(bottomLift, bottomPot, 3.3, -1.0);
+
+        intake.setPower(0.9);
+
+        while (gameruntime.seconds() < 29.9);
 
         System.out.println("ValleyX: ending");
     }
@@ -526,7 +541,7 @@ public class Autonomous2844Depot extends LinearOpMode
         gyroTarget %= 360;
         int correctCount = 0;
 
-        while (correctCount < timesCorrect)
+        while ((correctCount < timesCorrect) && opModeIsActive())
         {
             gyroActual = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
             double delta = (gyroTarget - gyroActual + 360.0) % 360.0; //the difference between target and actual mod 360
