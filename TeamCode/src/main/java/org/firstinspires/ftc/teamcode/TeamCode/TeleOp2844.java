@@ -112,7 +112,7 @@ public class TeleOp2844 extends LinearOpMode
             if (gamepad1.x == true) // true means pressed
             {
                 // hanging servo opening
-                hangingServo.setPosition(1.0);
+                hangingServo.setPosition(0.9); //1.0
                 lockServo.setPosition(0.0);
             }
             if (gamepad1.y == true)

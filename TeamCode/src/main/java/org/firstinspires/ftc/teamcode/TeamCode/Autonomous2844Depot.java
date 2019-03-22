@@ -28,7 +28,7 @@ public class Autonomous2844Depot extends LinearOpMode
     BNO055IMU imu;
     Orientation lastAngles = new Orientation();
     Orientation resetMark = new Orientation();
-    double globalAngle, power = .30;
+    double globalAngle, power = 0.30;
 
     private GoldAlignDetector detector;
 
@@ -111,6 +111,8 @@ public class Autonomous2844Depot extends LinearOpMode
         bottomLift = hardwareMap.dcMotor.get("blift"); // main 2 motor
         bottomLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         topLift = hardwareMap.dcMotor.get("tlift"); // main 3 motor
+        //topLift.setDirection(DcMotor.Direction.REVERSE);
+
 
         intake = hardwareMap.dcMotor.get("intake"); // secondary 0 motor
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -191,9 +193,9 @@ public class Autonomous2844Depot extends LinearOpMode
         lockServo.setPosition(1.0);
 
         waitForStart();
-        gameruntime.reset();
 
         System.out.println("ValleyX: Starting .... ");
+        gameruntime.reset();
 
         bottomLift.setPower(0.9);
         sleep(150);
@@ -201,7 +203,7 @@ public class Autonomous2844Depot extends LinearOpMode
         sleep(100);
         bottomLift.setPower(0.0);
 
-        goToPosition(bottomLift, bottomPot,1.401, -0.6);
+        goToPosition(bottomLift, bottomPot,1.401, -0.8);
 
         /* ---new remapping code --*/
         //swapping y & z axis due to vertical mounting of rev expansion board
@@ -309,27 +311,35 @@ public class Autonomous2844Depot extends LinearOpMode
         {
             System.out.println("ValleyX found left");
             encoderDrive(speed, -14, -14, 5);
-            rotate(45, 0.2, rotateDelay);
+            //rotate(45, 0.2, rotateDelay);
+            rotatePrecise(65,1,0.2,0.3,5);
             encoderDrive(speed, 15+driveExtra, 15+driveExtra, 6);
-            rotate(-30, 0.2, rotateDelay);
+            //rotate(-30, 0.2, rotateDelay);
+            rotatePrecise(-40,1,0.2,0.3,5);
+
         }
 
         if (foundRot == FoundRotationLocation.STRAIGHT)
         {
             System.out.println("ValleyX found straight");
             encoderDrive(speed, -14, -14, 5);
-            rotate(70, 0.2, rotateDelay);
+            //rotate(70, 0.2, rotateDelay);
+            rotatePrecise(90,1,0.2,0.3,5);
             encoderDrive(speed, 22+driveExtra, 22+driveExtra, 6);
-            rotate(-30, 0.2, rotateDelay);
+            //rotate(-30, 0.2, rotateDelay);
+            rotatePrecise(-40,1,0.2,0.3,5);
         }
 
         if (foundRot == FoundRotationLocation.RIGHT)
         {
             System.out.println("ValleyX found right");
             encoderDrive(speed, -14, -14, 5);
-            rotate(100, 0.2, rotateDelay);
+            //rotate(100, 0.2, rotateDelay);
+            rotatePrecise(115,1,0.2,0.3,5);
             encoderDrive(speed, 36+driveExtra, 36+driveExtra, 6);
-            rotate(-30, 0.2, rotateDelay);
+            //rotate(-30, 0.2, rotateDelay);
+            rotatePrecise(-40,1,0.2,0.3,5);
+
         }
 
         // drive up to wall
@@ -393,14 +403,12 @@ public class Autonomous2844Depot extends LinearOpMode
         //another color for crater points?
 
         //lower arm to ensure parking in crater
-        goToPosition(topLift, topPot, 1.7, 1.0);
-        System.out.println("ValleyX bottom");
         goToPosition(bottomLift, bottomPot, 3.3, -1.0);
+        System.out.println("ValleyX bottom");
+        goToPosition(topLift, topPot, 1.7, 1.0);
 
         intake.setPower(0.9);
-
         while (gameruntime.seconds() < 29.9);
-
         System.out.println("ValleyX: ending");
     }
 
